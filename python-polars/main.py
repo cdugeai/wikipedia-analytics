@@ -1,4 +1,7 @@
 import polars as pl
+import Timing
+
+t = Timing.Timing()
 
 
 FILE_SAMPLE = "../data/frwiki_namespace_0/sample.jsonl"
@@ -14,6 +17,7 @@ schema_ = {
 }
 df = pl.scan_ndjson(FILE_DATA_ALL, schema=schema_)
 
+t.start("count_infobox")
 count_infobox = (
     df.select(pl.col("infoboxes"))
     .with_columns(
@@ -27,5 +31,6 @@ count_infobox = (
     .sort(pl.col("n_articles"), descending=True)
 ).collect(engine="streaming")
 
+t.stop()
 print(count_infobox)
 count_infobox.write_csv("out/count_infobox.csv")
