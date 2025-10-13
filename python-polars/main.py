@@ -5,9 +5,7 @@ FILE_SAMPLE = "../data/frwiki_namespace_0/sample.jsonl"
 FILE_DATA1 = "../data/frwiki_namespace_0/frwiki_namespace_0_0.jsonl"
 FILE_DATA_ALL = "../data/frwiki_namespace_0/frwiki_namespace_0_*.jsonl"
 
-
-df = pl.scan_ndjson(FILE_SAMPLE)
-
+df = pl.scan_ndjson(FILE_DATA_ALL)
 
 count_infobox = (
     df.select(pl.col("infoboxes"))
@@ -20,7 +18,7 @@ count_infobox = (
     .group_by(pl.col("infobox1_name"))
     .len(name="n")
     # .sort(pl.col("n"), descending=True)
-).collect()
+).collect(engine="streaming")
 
 print(count_infobox)
 count_infobox.write_csv("out/count_infobox.csv")
