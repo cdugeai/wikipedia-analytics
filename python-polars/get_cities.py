@@ -13,24 +13,23 @@ FILE_DATA_ALL = "../data/frwiki_namespace_0/frwiki_namespace_0_*.jsonl"
 # Json properties to keep (speed-up parsing)
 schema_ = {
     "name": pl.Utf8,
+    "identifier": pl.Int32,
     "infoboxes": pl.List(
         pl.Struct([pl.Field("name", pl.Utf8), pl.Field("type", pl.Utf8)])
     ),
 }
-df = pl.scan_ndjson(FILE_SAMPLE, schema=schema_)
+df = pl.scan_ndjson(FILE_DATA_ALL, schema=schema_)
 
-t.start("count_infobox")
+t.start("get_cities")
 count_infobox = (
-    df.select(pl.col("infoboxes"))
-    .with_columns(
+    df.with_columns(
         infobox_len=pl.col("infoboxes").len(),
         # Name of the first infobox of the article
         infobox1_name=pl.col("infoboxes").list.first().struct.field("name"),
     )
-    .select(pl.col("infobox1_name"))
-    .group_by(pl.col("infobox1_name"))
-    .len(name="n_articles")
-    .sort(pl.col("n_articles"), descending=True)
+    .filter(pl.col("infobox1_name").eq("Infobox Commune de France"))
+    .select(pl.col("identifier").alias("id"), pl.col("name"))
+    .sort(pl.col("name"), descending=False)
 ).collect(engine="streaming")
 
 t.stop()
