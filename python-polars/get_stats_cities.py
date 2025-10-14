@@ -2,6 +2,7 @@
 
 import polars as pl
 import Timing
+import helpers
 
 t = Timing.Timing()
 
@@ -63,10 +64,37 @@ stats_cities = (
             '$[0].has_parts[?(@.name == "Maire Mandat")].value'
         ),
     )
+    .with_columns(
+        pl.col("maire_mandat")
+        .map_elements(lambda x: helpers.parse_maire(x)[0], return_dtype=pl.String)
+        .alias("maire")
+    )
     .select(pl.exclude("infobox_city"))
+    .select(
+        pl.col("id"),
+        pl.col("name"),
+        mayor=pl.col("maire_mandat").map_elements(
+            lambda x: helpers.parse_maire(x)[0], return_dtype=pl.String
+        ),
+        postal_code=pl.col("code_postal").map_elements(
+            helpers.parse_postal_code, return_dtype=pl.Int32
+        ),
+        population=pl.col("population_str").map_elements(
+            lambda x: helpers.parse_population_and_year(x)[0], return_dtype=pl.Int32
+        ),
+        density_km2=pl.col("density_str").map_elements(
+            helpers.parse_density, return_dtype=pl.Float64
+        ),
+        coords=pl.col("coords_str").map_elements(
+            lambda x: str(helpers.parse_coords(x)), return_dtype=pl.String
+        ),
+        area_km2=pl.col("superficy_str").map_elements(
+            helpers.parse_superficy, return_dtype=pl.Float64
+        ),
+    )
 ).collect(engine="streaming")
 
 t.stop()
 
-stats_cities.write_csv("out/cities_stats.csv")
-stats_cities.head(20).write_csv("out/cities_stats_sample20.csv")
+stats_cities.write_csv("out/cities_stats_parsed.csv")
+stats_cities.head(20).write_csv("out/cities_stats_parsed_sample20.csv")

@@ -1,36 +1,58 @@
 import re
 
 
+def to_int_safe(x):
+    try:
+        res = int(x)
+        return res
+    except ValueError:
+        return None
+
+
+def to_float_safe(x):
+    try:
+        res = float(x)
+        return res
+    except ValueError:
+        return None
+
+
 def parse_postal_code(str_):
     match_ = re.search(r"\d+\.?\d*", str_)
     if match_ is None:
         return None
     else:
-        return int(match_.group())
+        return to_int_safe(match_.group())
 
 
 def parse_population_and_year(str_):
     # Extract number (all digits and spaces before "hab.")
     number_match = re.search(r"([\d\s]+)\s*hab\.", str_)
-    population = int(number_match.group(1).replace(" ", "")) if number_match else None
+    population = (
+        to_int_safe(number_match.group(1).replace(" ", "")) if number_match else None
+    )
 
     # Extract year from parentheses
     year_match = re.search(r"\(([^)]*?(\d{4}))", str_)
-    year = int(year_match.group(1)) if year_match else None
+    year = to_int_safe(year_match.group(1)) if year_match else None
 
     return population, year
 
 
 def parse_density(str_):
     number_match = re.search(r"(\d+(?:[,.]\d+)?)hab\./km2", str_.replace(" ", ""))
-    density = float(number_match.group(1).replace(",", ".")) if number_match else None
+    density = (
+        to_float_safe(number_match.group(1).replace(",", ".")) if number_match else None
+    )
 
     return density
 
 
 def parse_superficy(str_):
     number_match = re.search(r"(\d+(?:[,.]\d+)?)km2", str_.replace(" ", ""))
-    superficy = float(number_match.group(1).replace(",", ".")) if number_match else None
+    superficy = (
+        to_float_safe(number_match.group(1).replace(",", ".")) if number_match else None
+    )
 
     return superficy
 
@@ -40,11 +62,11 @@ def parse_maire(str_):
     name = name_match.group(1) if name_match else None
 
     start_match = re.search(r"^.+?\s+(\d{4})\s*", str_)
-    start_year = int(start_match.group(1)) if start_match else None
+    start_year = to_int_safe(start_match.group(1)) if start_match else None
 
     end_match = re.search(r"-\s*(\d{4})$", str_)
-    end_year = int(end_match.group(1)) if end_match else None
-    #return {"name": name, "start_year": start_year, "end_year": end_year}
+    end_year = to_int_safe(end_match.group(1)) if end_match else None
+    # return {"name": name, "start_year": start_year, "end_year": end_year}
     return (name, start_year, end_year)
 
 
