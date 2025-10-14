@@ -4,6 +4,8 @@ get_cities:
 	time uv run python3 get_cities.py
 get_stats_cities:
 	time uv run python3 get_stats_cities.py
+get_stats_cities_native:
+	time uv run python3 get_stats_cities_native.py
 format:
 	uv run ruff format
 test:
