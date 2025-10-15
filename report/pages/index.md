@@ -149,3 +149,79 @@ Some stats about skyscrapers heights around the world.
     yAxisTitle="meters"
     y2AxisTitle="buildings"
 />
+
+
+# Population divisions
+
+```sql countries_pop
+  select
+      country,
+      case 
+        when country=='France' then concat(country, ' 🇫🇷')
+        when country=='Poland' then concat(country, ' 🇵🇱')
+        when country=='USA' then concat(country, ' 🇺🇸')
+      else country end as abbrev
+  from files.pop_countries
+  group by country
+```
+
+<Dropdown data={countries_pop} name=country_pop value=country label=abbrev >
+    <DropdownOption value="%" valueLabel="All Coutries"/>
+</Dropdown>
+
+
+```sql population_totals
+with selection as (
+    select 
+        country,
+        population,
+        n_cities,
+        country LIKE '${inputs.country_pop.value}' as in_selection
+    from pop_countries
+)
+
+select 
+    --in_selection,
+    sum(population) as pop_total,
+    sum(n_cities) as cities_total
+from selection
+where in_selection
+group by in_selection
+
+```
+
+<BigValue 
+  data={population_totals} 
+  value=pop_total
+  title="Selected population"
+  fmt=num2m
+/>
+
+<BigValue 
+  data={population_totals} 
+  value=cities_total
+  title="Selected cities"
+  fmt=num1k
+/>
+
+
+```sql population
+  select
+    country,
+    division,
+    population,n_cities,
+    population/n_cities as pop_per_city
+  from files.pop_countries
+   where country LIKE '${inputs.country_pop.value}'
+```
+
+<BarChart
+    data={population}
+    title="Most populated divisions in {inputs.country_pop.label}"
+    x=division
+    y=pop_per_city
+    y2=population
+    type=grouped
+    yAxisTitle="inhabitants"
+    y2AxisTitle="cities"
+/>
