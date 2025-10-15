@@ -6,7 +6,7 @@ title: Some Wikipedia Stats
 
 ```sql stats
   select
-      n_articles, total_char, avg_char_per_article
+      n_articles, total_char, avg_char_per_article, skyscrapers_total
   from files.general_stats
 ```
 
@@ -49,6 +49,8 @@ Here are some statistics about the content of French Wikipedia.
     y=n_articles
     yAxisTitle="articles"
 />
+
+
 
 
 # Movies in Wikipedia ?
@@ -114,4 +116,36 @@ Here are some statistics about the content of French Wikipedia.
     midpoint=midpoint
     intervalTop=intervalTop
     yFmt=usd0
+/>
+
+# Skyscrapers ?
+
+Some stats about skyscrapers heights around the world.
+
+
+
+
+<BigValue 
+  data={stats} 
+  value=skyscrapers_total
+  title="Skyscrapers found"
+  fmt=id
+/>
+
+```sql skyscrapers
+  select
+    country,number_of_skyscrapers,avg_max_height,max_height
+  from files.skyscrapers
+  order by max_height desc
+```
+
+<BarChart
+    data={skyscrapers}
+    title="Skyscrapers around the world"
+    x=country
+    y2=number_of_skyscrapers
+    y=max_height
+    type=grouped
+    yAxisTitle="meters"
+    y2AxisTitle="buildings"
 />
