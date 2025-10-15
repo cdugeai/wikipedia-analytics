@@ -2,7 +2,56 @@
 title: Some Wikipedia Stats
 ---
 
-## Movies in Wikipedia ?
+# Some stats
+
+```sql stats
+  select
+      n_articles, total_char, avg_char_per_article
+  from files.general_stats
+```
+
+
+
+Here are some statistics about the content of French Wikipedia.
+
+<BigValue 
+  data={stats} 
+  value=n_articles
+  title="Articles"
+  fmt='#,##0.000,,"M"'
+/>
+
+<BigValue 
+  data={stats} 
+  value=total_char
+  title="Total characters"
+  fmt=num2b
+/>
+
+<BigValue 
+  data={stats} 
+  value=avg_char_per_article
+  title="Characters per article (avg.)"
+  fmt=num1k
+/>
+
+
+```sql article_dates
+  select
+      month_date,n_articles
+  from files.articles_dates
+```
+
+<BarChart
+    data={article_dates}
+    title="Last modification date"
+    x=month_date
+    y=n_articles
+    yAxisTitle="articles"
+/>
+
+
+# Movies in Wikipedia ?
 
 
 ```sql countries
