@@ -6,7 +6,7 @@ title: Some Wikipedia Stats
 
 ```sql stats
   select
-      n_articles, total_char, avg_char_per_article, 11 as skyscrapers_total
+      n_articles, total_char, avg_char_per_article
   from files.general_stats
 ```
 
@@ -273,32 +273,65 @@ Some stats about skyscrapers heights around the world.
 
 
 
+```sql skyscrapers_top_countries
+    with 
+    c as (select country, sum(n_skyscrapers) as n_skyscrapers from files.skyscrapers group by country),
+    top_c as (select country, n_skyscrapers from c order by n_skyscrapers DESC limit ${inputs.skyc_countries_limit})
+    select country, n_skyscrapers from top_c
+```
 
-<BigValue 
-  data={stats} 
-  value=skyscrapers_total
-  title="Skyscrapers found"
-  fmt=id
-/>
+
+```sql skyscrapers_stats
+    select sum(n_skyscrapers) as skyscrapers_total from ${skyscrapers_top_countries}
+```
+
+
 
 ```sql skyscrapers
   select
-    country,number_of_skyscrapers,avg_max_height,max_height
-  from files.skyscrapers
-  order by max_height desc
+    s.country,s.n_skyscrapers,s.max_height,s.min_height,s.avg_height
+  from files.skyscrapers s
+    right join ${skyscrapers_top_countries} top_s on top_s.country=s.country
+  order by s.n_skyscrapers desc
 ```
+
+<Grid col=2>
+    <BigValue 
+      data={skyscrapers_stats} 
+      value=skyscrapers_total
+      title="Skyscrapers in selection"
+      fmt=id
+    />
+    <Slider
+      title="Countries"
+      name=skyc_countries_limit
+      min=5
+      max=300
+      step=1
+    />
+    
+</Grid>
 
 <BarChart
     data={skyscrapers}
     title="Skyscrapers around the world"
     x=country
-    y2=number_of_skyscrapers
-    y=max_height
+    y=n_skyscrapers
+    y2=max_height
     type=grouped
-    yAxisTitle="meters"
-    y2AxisTitle="buildings"
+    y2AxisTitle="meters"
+    yAxisTitle="buildings"
 />
 
+<DataTable data={skyscrapers} search=true rows=5 totalRow=true title="Search skyscrapers data" rowShading=false> 
+    <Column id=country totalAgg="Selected countries"/>
+    <Column id=n_skyscrapers totalAgg=sum contentType=colorscale colorScale=positive title="Skyscrapers"/>
+    <Column id=max_height title="Height max (m)" totalAgg=mean weightCol=gdp_usd fmt='id' contentType=colorscale colorScale=positive/>
+    <Column id=min_height title="Height min (m)" totalAgg=mean fmt='#,##0"m"'/>
+    <Column id=avg_height title="Height avg (m)" totalAgg=mean fmt='#,##0"m"' contentType=colorscale colorScale=positive/>
+</DataTable>
+
+*Note:* Some Skyscrapers data can be related to projects that haven't been finished as it is the case for [this 750m tower in France](https://fr.wikipedia.org/wiki/Tour_Tourisme_TV).
 
 # Population divisions
 
