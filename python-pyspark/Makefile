@@ -12,6 +12,8 @@ footballer_data:
 	time uv run python3 footballer_data.py
 get_footballer_stats:
 	time uv run python3 get_footballer_stats.py
+bucket_date_creation:
+	time uv run python3 bucket_date_creation.py
 format:
 	uv run ruff format
 

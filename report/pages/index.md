@@ -38,16 +38,21 @@ Here are some statistics about the content of French Wikipedia.
 
 ```sql article_dates
   select
-      month_date,n_articles
+      q_created,n_articles
   from files.articles_dates
+  -- remove data with no creation date
+  where len(q_created)>0
 ```
 
 <BarChart
     data={article_dates}
-    title="Last modification date"
-    x=month_date
+    title="New articles per quarter"
+    x=q_created
     y=n_articles
     yAxisTitle="articles"
+    sort=false
+    labels=false
+    xAxisTitle="Date"
 />
 
 
@@ -63,14 +68,8 @@ Here are some statistics about the content of French Wikipedia.
   group by country_ref
 ```
 
-<Grid cols=2>
-<div class="flex">
-    <BigValue 
-      data={stats_football} 
-      value=n_players
-      title="Players"
-      fmt=id
-    />
+<Grid cols=1>
+<div class="flex gap-4">
     <Dropdown data={countries_football} name=country_foot value=country_ref >
         <DropdownOption value="%" valueLabel="All Countries"/>
     </Dropdown>
@@ -80,19 +79,24 @@ Here are some statistics about the content of French Wikipedia.
         <DropdownOption valueLabel="Right" value="right" />
         <DropdownOption valueLabel="Both" value="both" />
     </Dropdown>
+     <Slider
+          title="Countries"
+          name=football_countries_limit
+          min=5
+          max=300
+          step=1
+        />
 </div>
-<div>
-    <Slider
-      title="Countries"
-      name=football_countries_limit
-      min=5
-      max=300
-      step=1
-    />
-</div>
+   
 
 </Grid>
-   
+
+<BigValue 
+      data={stats_football} 
+      value=n_players
+      title="Players in selection"
+      fmt=id
+    />
 
 
 
