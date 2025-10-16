@@ -72,7 +72,7 @@ Here are some statistics about the content of French Wikipedia.
       fmt=id
     />
     <Dropdown data={countries_football} name=country_foot value=country_ref >
-        <DropdownOption value="%" valueLabel="All Coutries"/>
+        <DropdownOption value="%" valueLabel="All Countries"/>
     </Dropdown>
     <Dropdown name=foot >
         <DropdownOption valueLabel="Any foot" value="%"/>
@@ -167,28 +167,54 @@ order by country_ref
   group by country
 ```
 
-```sql genres
-  select
-      genre
-  from files.films
-  group by genre
+```sql movies_top_genres
+    with 
+    g as (select genre, sum(n_movies) as n_movies from files.films group by genre),
+    top_g as (select genre, n_movies from g order by n_movies DESC limit 10)
+    select genre, n_movies from top_g limit ${inputs.movies_genres_limit}
 ```
 
+
 <Dropdown data={countries} name=country value=country >
-    <DropdownOption value="%" valueLabel="All Coutries"/>
+    <DropdownOption value="%" valueLabel="All Countries"/>
 </Dropdown>
 
-<Dropdown data={genres} name=genre value=genre>
+<Dropdown data={movies_top_genres} name=genre value=genre>
     <DropdownOption value="%" valueLabel="All Genres"/>
 </Dropdown>
+
+<Slider
+      title="Countries"
+      name=movies_countries_limit
+      min=5
+      max=300
+      step=1
+    />
+<Slider
+      title="Top genres"
+      name=movies_genres_limit
+      min=5
+      max=10
+      step=1
+    />
+
+```sql movies_top_countries
+    with 
+    c as (select country, sum(n_movies) as n_movies from files.films group by country),
+    top_c as (select country, n_movies from c order by n_movies DESC limit ${inputs.movies_countries_limit})
+    select country, n_movies from top_c
+```
+
 
 
 ```sql all_durations
   select 
-  genre, country, duration
-  from files.films
-  where genre LIKE '${inputs.genre.value}'
-  and country LIKE '${inputs.country.value}'
+  g.genre, f.country, f.avg_duration, f.n_movies
+  from 
+    files.films f
+    right join ${movies_top_genres} g on g.genre=f.genre
+    right join ${movies_top_countries} tc on tc.country=f.country
+  where g.genre LIKE '${inputs.genre.value}'
 ```
 
 
@@ -203,12 +229,13 @@ order by country_ref
 
 <BarChart
     data={all_durations}
-    title="Average movie duration, {inputs.country.label}"
-    x=genre
-    y=duration
-    series=country
-    type=grouped
-    yAxisTitle="minutes"
+    title="Total movies, {inputs.country.label}"
+    x=country
+    y=n_movies
+    series=genre
+    colorPalette={["#003f5c","#2f4b7c","#665191","#a05195","#d45087","#f95d6a","#ff7c43","#ffa600"]}
+    colorPaletteGreen={["#20982a","#40a23f","#58ad53","#6db767","#81c17a","#95cc8d","#a8d6a1","#bbe0b5","#ceeac9"]}
+    yAxisTitle="movies"
 />
 
 
@@ -270,7 +297,7 @@ Some stats about skyscrapers heights around the world.
 ```
 
 <Dropdown data={countries_pop} name=country_pop value=country label=abbrev >
-    <DropdownOption value="%" valueLabel="All Coutries"/>
+    <DropdownOption value="%" valueLabel="All Countries"/>
 </Dropdown>
 
 
