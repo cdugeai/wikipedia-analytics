@@ -106,6 +106,8 @@ movies_stats_by_genre = movies_data.groupBy(["genre"]).agg(
     pys.percentile_approx(pys.col("duration_m"), 0.75).alias("dur_q3"),
     pys.max("duration_m").alias("max_duration"),
     pys.min("duration_m").alias("min_duration"),
+    pys.avg("duration_m").alias("avg_duration"),
+    pys.median("duration_m").alias("median_duration"),
 )
 
 # movies_stats_by_genre.show()
@@ -136,6 +138,10 @@ movies_stats_by_genre_country = (
 # movies_stats_by_genre_country.show()
 
 # movies.explain()
+
+movies_stats_by_genre.write.mode("overwrite").csv(
+    "out/movies_stats_by_genre.csv", header=True
+)
 movies_stats_by_genre_country.write.mode("overwrite").csv(
     "out/movies_stats_by_genre_country.csv", header=True
 )

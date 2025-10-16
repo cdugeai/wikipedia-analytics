@@ -174,29 +174,38 @@ order by country_ref
     select genre, n_movies from top_g limit ${inputs.movies_genres_limit}
 ```
 
+You can explore the movies present in Wikipedia. Country, genres and durations are explored in the following graphs.
 
-<Dropdown data={countries} name=country value=country >
+<Grid cols=1>
+<div class="flex gap-4">
+    <Dropdown data={countries} name=country value=country >
     <DropdownOption value="%" valueLabel="All Countries"/>
-</Dropdown>
-
-<Dropdown data={movies_top_genres} name=genre value=genre>
-    <DropdownOption value="%" valueLabel="All Genres"/>
-</Dropdown>
-
-<Slider
+    </Dropdown>
+    <Dropdown data={movies_top_genres} name=genre value=genre>
+        <DropdownOption value="%" valueLabel="All Genres"/>
+    </Dropdown>
+    <Slider
       title="Countries"
       name=movies_countries_limit
       min=5
       max=300
       step=1
     />
-<Slider
+    <Slider
       title="Top genres"
       name=movies_genres_limit
       min=5
       max=10
       step=1
     />
+</div>
+</Grid>
+<BigValue 
+  data={total_movies} 
+  value=n_movies
+  title="Movies in selection"
+  fmt=id
+/>
 
 ```sql movies_top_countries
     with 
@@ -205,9 +214,7 @@ order by country_ref
     select country, n_movies from top_c
 ```
 
-
-
-```sql all_durations
+```sql movies_by_genre_country
   select 
   g.genre, f.country, f.avg_duration, f.n_movies
   from 
@@ -217,18 +224,13 @@ order by country_ref
   where g.genre LIKE '${inputs.genre.value}'
 ```
 
-
-```sql boxplot_data
-  select 
-    name,intervalBottom,midpoint,intervalTop
-  from files.boxplot_sample
-  --where genre LIKE '${inputs.genre.value}'
-  --and country LIKE '${inputs.country.value}'
+```sql total_movies
+  select sum(n_movies) as n_movies
+  from ${movies_by_genre_country}
 ```
 
-
 <BarChart
-    data={all_durations}
+    data={movies_by_genre_country}
     title="Total movies, {inputs.country.label}"
     x=country
     y=n_movies
@@ -238,15 +240,27 @@ order by country_ref
     yAxisTitle="movies"
 />
 
+```sql boxplot_films_by_genre
+  select 
+    f.genre,f.n_movies,dur_q1,dur_q3,max_duration,min_duration,avg_duration,median_duration
+  from 
+    files.films_by_genre f
+    right join ${movies_top_genres} g on g.genre=f.genre
+  order by median_duration DESC
+```
+
+Here is the distribution of all movies durations among the selected genres.
 
 <BoxPlot 
-    data={boxplot_data}
-    title="Movie duration, aggregated for {inputs.country.label} and {inputs.genre.label}"
-    name=name
-    intervalBottom=intervalBottom
-    midpoint=midpoint
-    intervalTop=intervalTop
-    yFmt=usd0
+    data={boxplot_films_by_genre}
+    title="Movie duration by genre"
+    name=genre
+    intervalBottom=dur_q1
+    midpoint=median_duration
+    intervalTop=dur_q3
+    sort=false
+    yAxisTitle="minutes"
+    yFmt=id
 />
 
 # Skyscrapers ?
