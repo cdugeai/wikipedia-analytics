@@ -52,6 +52,110 @@ Here are some statistics about the content of French Wikipedia.
 
 
 
+# Footballer stats
+
+[//]: # (Data selectors for football)
+
+```sql countries_football
+  select
+      country_ref
+  from files.footballer_stats
+  group by country_ref
+```
+
+<Grid cols=2>
+<div class="flex">
+    <BigValue 
+      data={stats_football} 
+      value=n_players
+      title="Players"
+      fmt=id
+    />
+    <Dropdown data={countries_football} name=country_foot value=country_ref >
+        <DropdownOption value="%" valueLabel="All Coutries"/>
+    </Dropdown>
+    <Dropdown name=foot >
+        <DropdownOption valueLabel="Any foot" value="%"/>
+        <DropdownOption valueLabel="Left" value="left" />
+        <DropdownOption valueLabel="Right" value="right" />
+        <DropdownOption valueLabel="Both" value="both" />
+    </Dropdown>
+</div>
+<div>
+    <Slider
+      title="Countries"
+      name=football_countries_limit
+      min=5
+      max=300
+      step=1
+    />
+</div>
+
+</Grid>
+   
+
+
+
+[//]: # (Computed selected data for football)
+
+```sql football_right_vs_left
+with src as (select * from files.footballer_stats where foot in ('left', 'right'))
+select country_ref,
+    100* (sum(n_players) filter (where foot='right')) / (sum(n_players) filter (where foot='right')+sum(n_players) filter (where foot='left')) as pct_right
+    --sum(n_players) filter (where foot='right') as t_right,
+    --sum(n_players) filter (where foot='left') as t_left
+from src
+group by country_ref
+order by country_ref
+```
+
+```sql football_selected_data
+  select
+    a.country_ref,
+    a.foot,
+    a.n_players,avg_height, 
+    b.pct_right
+  from files.footballer_stats a
+  left join ${football_right_vs_left} b on a.country_ref=b.country_ref
+      where a.country_ref LIKE '${inputs.country_foot.value}'
+          and a.foot LIKE '${inputs.foot.value}'
+        order by a.n_players DESC, a.foot
+        limit ${inputs.football_countries_limit}
+
+```
+
+```sql stats_football
+  select
+      sum(n_players) as n_players
+  from ${football_selected_data}
+```
+
+[//]: # (Graphs for football)
+
+
+
+<BarChart
+    data={football_selected_data}
+    colorPaletteBkp={['#cf0d06','#eb5752','#e88a87']}
+    colorPalette={['#c40000','#df6242','#f39e84','#ffd8cb']}
+    title="Total players"
+    x=country_ref
+    y=n_players
+    series=foot
+    yAxisTitle="players"
+    sort=false
+/>
+
+<ScatterPlot
+    data={football_selected_data}
+    colorPaletteBkp={['#cf0d06','#eb5752','#e88a87']}
+    colorPalette={['#c40000','#df6242','#f39e84','#ffd8cb']}
+    title="Percentage of right-footed players"
+    x=country_ref
+    y=pct_right
+    yAxisTitle="%"
+    sort=false
+/>
 
 # Movies in Wikipedia ?
 
