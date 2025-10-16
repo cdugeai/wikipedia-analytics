@@ -2,6 +2,80 @@
 title: Some Wikipedia Stats
 ---
 
+# What is this page ?
+
+This page is presenting a work of **data engineering** more than data analytics. However, as it is not easy to showcase data engineering work, I wanted to present the result of the tasks in a more friendly format.
+
+
+<Details title="Click here for full context, data and tools">
+
+
+So this document is **not a data analytics showcase** but an *evidence* that **large analytics and data exploration don't necessarily require expensive clusters** of machines:
+
+- the whole wikipedia can be processed in 30s on a single machine
+- data exploration later in this page fully runs in the browser, without server
+
+
+
+
+
+## What data ?
+
+The dataset is an dump containing wikipedia articles. I chose this dataset as a subset of reasonable size has already been created: **a dump of all French articles of Wikipedia (34GB)**.
+Here is the official description of this dataset:
+
+> This dataset contains all articles of the English and French language editions of Wikipedia, pre-parsed and outputted as structured JSON files with a consistent schema (JSONL compressed as zip). Each JSON line holds the content of one full Wikipedia article stripped of extra markdown and non-prose sections (references, etc.).
+> 
+> https://huggingface.co/datasets/wikimedia/structured-wikipedia#dataset-summary
+
+
+|              | Dataset info                                                   |
+|--------------|----------------------------------------------------------------|
+| Content      | French Wikipedia                                               |
+| Size         | 34GB                                                           |
+| Date of dump | 16 September 2024                                              |
+| Source       | https://huggingface.co/datasets/wikimedia/structured-wikipedia |
+|              |                                                                |
+
+
+## What tools ?
+
+To query the dataset and perform the analytics calculations present in the document, I created a few queries in **Pyspark** and **Polars**. 
+
+
+However, thanks to modern tools, we can now compute a large volume of data on a single machine, no matter the available memory. 
+Here are the processing time to crawl the whole dataset for any query I wrote:
+
+| Engine  | Processing time |
+|---------|-----------------|
+| Polars  | `< 50s`          |
+| Pyspark | `< 30s`          |
+
+<Grid cols=2>
+    <Image 
+        url="https://www.bigdatawire.com/wp-content/uploads/2024/10/Polars_logo_1.png"
+        description="Sample placeholder image"
+        height=200
+    />
+    <Image 
+            url="https://images.seeklogo.com/logo-png/34/2/apache-spark-logo-png_seeklogo-349535.png"
+            description="Sample placeholder image"
+            height=200
+    />
+</Grid>
+
+
+
+As the input data is a collection of `.jsonl` files, every query had to parse the whole 34GB of content. 
+This is why the queries are relatively slow compared to `.parquet` or Arrow formats. Even CSV files would have been faster to process.
+
+Read [this article](https://medium.com/@ManueleCaddeo/understanding-jsonl-bc8922129f5b) to know more about `.jsonl` format.
+
+To create this page, I used [the awesome tool Evidence](https://evidence.dev/).
+
+
+</Details>
+
 # 📊 General statistics
 
 ## Articles and characters
@@ -374,3 +448,12 @@ With this table, you can search, sort and export the data you need.
 
 *Note:* Some Skyscrapers data can be related to projects that haven't been finished as it is the case for [this 750m tower in France](https://fr.wikipedia.org/wiki/Tour_Tourisme_TV).
 
+# What next ?
+
+<Details title="Next steps">
+
+    Analyse the changes of Wikipedia in **real-time**. 
+    
+    For this, Wikipedia provides an [EventStreams HTTP Service](https://wikitech.wikimedia.org/wiki/Event_Platform/EventStreams_HTTP_Service) all the events in real_time.
+    The tools I will use for this task will be [Apache Kafka](https://kafka.apache.org/), [Apache Flink](https://flink.apache.org/) (and probably [Apache Beam](https://beam.apache.org/))
+</Details>
