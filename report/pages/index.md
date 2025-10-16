@@ -6,7 +6,7 @@ title: Some Wikipedia Stats
 
 ```sql stats
   select
-      n_articles, total_char, avg_char_per_article, skyscrapers_total
+      n_articles, total_char, avg_char_per_article, 11 as skyscrapers_total
   from files.general_stats
 ```
 
