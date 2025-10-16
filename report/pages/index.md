@@ -2,15 +2,15 @@
 title: Some Wikipedia Stats
 ---
 
-# Some stats
+# 📊 General statistics
+
+## Articles and characters
 
 ```sql stats
   select
       n_articles, total_char, avg_char_per_article
   from files.general_stats
 ```
-
-
 
 Here are some statistics about the content of French Wikipedia.
 
@@ -36,6 +36,19 @@ Here are some statistics about the content of French Wikipedia.
 />
 
 
+So French Wikipedia contains **2.7** million articles, that represents **22 billion characters** ! This is equivalent of **reading Romeo and Juliet 150 000 times**.
+
+<Image 
+    url="https://media1.giphy.com/media/v1.Y2lkPTZjMDliOTUyZm1kdDQ2dncxMnNtcmo4ZjBuaDVzYTlld3FpcmkzOTU0OHhiYnQzZiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/WoWm8YzFQJg5i/giphy.webp"
+    description="Sample placeholder image"
+    height=200
+/>
+
+
+## Creation timeline
+
+Here is a timeline of the creation of articles, every quarter from year 2001.
+
 ```sql article_dates
   select
       q_created,n_articles
@@ -57,7 +70,9 @@ Here are some statistics about the content of French Wikipedia.
 
 
 
-# Footballer stats
+# ⚽️ Footballer stats
+
+In this section, you can explore some statistics about football players present in the French Wikipedia.
 
 [//]: # (Data selectors for football)
 
@@ -136,6 +151,7 @@ order by country_ref
 
 [//]: # (Graphs for football)
 
+## Players by country
 
 
 <BarChart
@@ -150,6 +166,10 @@ order by country_ref
     sort=false
 />
 
+## Right or left foot ?
+
+Here is a plot displaying the ration of right-footed players compared to the total of players of the country. For most of the countries, the ratio is around 70%. 
+
 <ScatterPlot
     data={football_selected_data}
     colorPaletteBkp={['#cf0d06','#eb5752','#e88a87']}
@@ -161,8 +181,9 @@ order by country_ref
     sort=false
 />
 
-# Movies in Wikipedia ?
+# 🎬 Movies
 
+## Genres and countries
 
 ```sql countries
   select
@@ -244,16 +265,33 @@ You can explore the movies present in Wikipedia. Country, genres and durations a
     yAxisTitle="movies"
 />
 
+## Duration by genre
+
 ```sql boxplot_films_by_genre
   select 
-    f.genre,f.n_movies,dur_q1,dur_q3,max_duration,min_duration,avg_duration,median_duration
+    UPPER(SUBSTRING(f.genre, 1, 1)) || SUBSTRING(f.genre, 2) as genre,
+    f.n_movies,dur_q1,dur_q3,max_duration,min_duration,avg_duration,median_duration
   from 
     files.films_by_genre f
     right join ${movies_top_genres} g on g.genre=f.genre
   order by median_duration DESC
 ```
 
-Here is the distribution of all movies durations among the selected genres.
+
+
+
+<Grid cols=2>
+    <Image 
+        url="https://c.tenor.com/gDWXh_83aQgAAAAd/tenor.gif"
+        description="Sample placeholder image"
+        height=200
+    />
+    <p>Are actions movies are actually longer than documentaries ? <br/>
+    Here is the distribution of all movies durations among the selected genres.
+    </p>
+</Grid>
+
+
 
 <BoxPlot 
     data={boxplot_films_by_genre}
@@ -267,11 +305,9 @@ Here is the distribution of all movies durations among the selected genres.
     yFmt=id
 />
 
-# Skyscrapers ?
+# 💫 Skyscrapers
 
-Some stats about skyscrapers heights around the world.
-
-
+Number of skyscrapers for each country, with the height of the tallest building.
 
 ```sql skyscrapers_top_countries
     with 
@@ -323,6 +359,11 @@ Some stats about skyscrapers heights around the world.
     yAxisTitle="buildings"
 />
 
+
+## Search the data
+
+With this table, you can search, sort and export the data you need.
+
 <DataTable data={skyscrapers} search=true rows=5 totalRow=true title="Search skyscrapers data" rowShading=false> 
     <Column id=country totalAgg="Selected countries"/>
     <Column id=n_skyscrapers totalAgg=sum contentType=colorscale colorScale=positive title="Skyscrapers"/>
@@ -333,77 +374,3 @@ Some stats about skyscrapers heights around the world.
 
 *Note:* Some Skyscrapers data can be related to projects that haven't been finished as it is the case for [this 750m tower in France](https://fr.wikipedia.org/wiki/Tour_Tourisme_TV).
 
-# Population divisions
-
-```sql countries_pop
-  select
-      country,
-      case 
-        when country=='France' then concat(country, ' 🇫🇷')
-        when country=='Poland' then concat(country, ' 🇵🇱')
-        when country=='USA' then concat(country, ' 🇺🇸')
-      else country end as abbrev
-  from files.pop_countries
-  group by country
-```
-
-<Dropdown data={countries_pop} name=country_pop value=country label=abbrev >
-    <DropdownOption value="%" valueLabel="All Countries"/>
-</Dropdown>
-
-
-```sql population_totals
-with selection as (
-    select 
-        country,
-        population,
-        n_cities,
-        country LIKE '${inputs.country_pop.value}' as in_selection
-    from pop_countries
-)
-
-select 
-    --in_selection,
-    sum(population) as pop_total,
-    sum(n_cities) as cities_total
-from selection
-where in_selection
-group by in_selection
-
-```
-
-<BigValue 
-  data={population_totals} 
-  value=pop_total
-  title="Selected population"
-  fmt=num2m
-/>
-
-<BigValue 
-  data={population_totals} 
-  value=cities_total
-  title="Selected cities"
-  fmt=num1k
-/>
-
-
-```sql population
-  select
-    country,
-    division,
-    population,n_cities,
-    population/n_cities as pop_per_city
-  from files.pop_countries
-   where country LIKE '${inputs.country_pop.value}'
-```
-
-<BarChart
-    data={population}
-    title="Most populated divisions in {inputs.country_pop.label}"
-    x=division
-    y=pop_per_city
-    y2=population
-    type=grouped
-    yAxisTitle="inhabitants"
-    y2AxisTitle="cities"
-/>
