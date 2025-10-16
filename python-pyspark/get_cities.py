@@ -45,10 +45,9 @@ t.start("get_cities")
 df = spark.read.schema(schema).json(FILE_DATA_ALL)
 
 cities = (
-    df.filter(pys.col("infoboxes")[0]["name"] == "Infobox Commune de France").select(
-        pys.col("identifier").alias("id"), pys.col("name")
-    )
-    .orderBy(pys.col("name")) # adds +100% processing time
+    df.filter(pys.col("infoboxes")[0]["name"] == "Infobox Commune de France")
+    .select(pys.col("identifier").alias("id"), pys.col("name"))
+    .orderBy(pys.col("name"))  # adds +100% processing time
 )
 
 cities.explain()

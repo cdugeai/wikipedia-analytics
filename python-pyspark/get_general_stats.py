@@ -55,7 +55,7 @@ general_stats = (
     )
 )
 
-#general_stats.show()
+# general_stats.show()
 
 general_stats.explain()
 general_stats.write.mode("overwrite").csv("out/general_stats.csv", header=True)

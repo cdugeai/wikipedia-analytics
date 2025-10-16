@@ -88,7 +88,7 @@ skycrapers = (
         "height",
         pys.regexp_replace(
             pys.regexp_extract(pys.col("toit"), r"(\d+[\.,\d]*)\sm", 1), ",", "."
-        ).try_cast("double")
+        ).try_cast("double"),
     )
     .drop("parsed", "infobox_skyscraper", "toit")
     .join(countries_ref, how="left", on="country")

@@ -28,12 +28,14 @@ schema = StructType(
 
 t.start("get_general_stats")
 
-df: DataFrame = spark.read.schema(schema).json(FILE_DATA_ALL)#.limit(100000)
+df: DataFrame = spark.read.schema(schema).json(FILE_DATA_ALL)  # .limit(100000)
 
 creation_dates = (
     df
     # .filter(pys.col("infoboxes")[0]["name"] == "Infobox Commune de France")
-    .withColumn("date_", pys.coalesce(pys.col("date_created"), pys.col("date_modified")))
+    .withColumn(
+        "date_", pys.coalesce(pys.col("date_created"), pys.col("date_modified"))
+    )
     .select(
         pys.col("identifier").alias("id"),
         pys.col("name"),
