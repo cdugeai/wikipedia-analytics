@@ -2,6 +2,8 @@ run:
 	time uv run python3 main.py
 get_cities:
 	time uv run python3 get_cities.py
+get_movies:
+	time uv run python3 get_movies.py
 get_stats_cities:
 	time uv run python3 get_stats_cities.py
 footballer_data:
