@@ -17,6 +17,6 @@ class KafkaTopic:
         self.msg_sent += 1
         print("Sent:", self.msg_sent)
 
-    def exit(self):
+    def close_producer(self):
         self.producer.close()
         print("Producer closed")

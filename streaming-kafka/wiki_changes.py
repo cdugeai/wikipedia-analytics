@@ -1,40 +1,31 @@
 import requests
 import signal
-from requests_sse import EventSource
 from KafkaTopic import KafkaTopic
-from wiki_helpers import format_change
+from wiki_helpers import format_change, stream_changes
 
 
-def send_data(k: KafkaTopic):
-    headers = {
-        "User-Agent": "MyWikipediaBot/1.0 (https://example.com; contact@example.com)"
-    }
+# Generate a signal handle with custom function
+def generate_signal_handler(run_on_exit):
+    def signal_handler(sig, frame):
+        print("\nShutting down gracefully...")
+        run_on_exit()
+        exit(0)
 
-    url = "https://stream.wikimedia.org/v2/stream/recentchange"
-    with EventSource(url, headers=headers) as stream:
-        for event in stream:
-            if event.type == "message":
-                try:
-                    k.send(format_change(event.data))
-                except ValueError:
-                    pass
+    return signal_handler
 
 
-k = KafkaTopic("wiki_data", "localhost:9092")
+if __name__ == "__main__":
+    # Connect to Kafka
+    k = KafkaTopic("wiki_data", "localhost:9092")
+    # Function to close producer on error
+    close_producer = lambda: k.close_producer()
+    # Register the signal handler
+    signal.signal(signal.SIGINT, generate_signal_handler(close_producer))
 
-# Function to run when terminating the process
-run_on_close = lambda: k.exit()
-
-def signal_handler(sig, frame):
-    print("\nShutting down gracefully...")
-    run_on_close()
-    exit(0)
-
-# Register the signal handler
-signal.signal(signal.SIGINT, signal_handler)
-
-try:
-    send_data(k)
-except Exception as e:
-    print(f"Error: {e}")
-    run_on_close()
+    # Send all changes to Kafka
+    try:
+        for change_json in stream_changes():
+            k.send(change_json)
+    except Exception as e:
+        print(f"Error: {e}")
+        close_producer()

@@ -1,4 +1,7 @@
 import json
+from typing import Iterator
+from requests_sse import EventSource
+
 
 def format_change(change_str: str) -> object:
     change = json.loads(change_str)
@@ -22,3 +25,17 @@ def format_change(change_str: str) -> object:
         "wiki": change.get("wiki"),
         "parsedcomment": change.get("parsedcomment"),
     }
+
+
+def stream_changes() -> Iterator[object]:
+    url = "https://stream.wikimedia.org/v2/stream/recentchange"
+    headers = {
+        "User-Agent": "MyWikipediaBot/1.0 (https://example.com; contact@example.com)"
+    }
+    with EventSource(url, headers=headers) as stream:
+        for event in stream:
+            if event.type == "message":
+                try:
+                    yield format_change(event.data)
+                except ValueError:
+                    pass
