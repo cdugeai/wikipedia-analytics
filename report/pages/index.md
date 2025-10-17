@@ -6,18 +6,12 @@ title: Some Wikipedia Stats
 
 This page is presenting a work of **data engineering** more than data analytics. However, as it is not easy to showcase data engineering work, I wanted to present the result of the tasks in a more friendly format.
 
-
 <Details title="Click here for full context, data and tools">
 
-
-So this document is **not a data analytics showcase** but an *evidence* that **large analytics and data exploration don't necessarily require expensive clusters** of machines:
+So this document is **not a data analytics showcase** but an _evidence_ that **large analytics and data exploration don't necessarily require expensive clusters** of machines:
 
 - the whole wikipedia can be processed in 30s on a single machine
 - data exploration later in this page fully runs in the browser, without server
-
-
-
-
 
 ## What data ?
 
@@ -25,54 +19,108 @@ The dataset is an dump containing wikipedia articles. I chose this dataset as a 
 Here is the official description of this dataset:
 
 > This dataset contains all articles of the English and French language editions of Wikipedia, pre-parsed and outputted as structured JSON files with a consistent schema (JSONL compressed as zip). Each JSON line holds the content of one full Wikipedia article stripped of extra markdown and non-prose sections (references, etc.).
-> 
+>
 > https://huggingface.co/datasets/wikimedia/structured-wikipedia#dataset-summary
 
-
 |              | Dataset info                                                   |
-|--------------|----------------------------------------------------------------|
+| ------------ | -------------------------------------------------------------- |
 | Content      | French Wikipedia                                               |
 | Size         | 34GB                                                           |
 | Date of dump | 16 September 2024                                              |
 | Source       | https://huggingface.co/datasets/wikimedia/structured-wikipedia |
 |              |                                                                |
 
-
 ## What tools ?
 
-To query the dataset and perform the analytics calculations present in the document, I created a few queries in **Pyspark** and **Polars**. 
+To query the dataset and perform the analytics calculations present in the document, I created a few queries in **Pyspark** and **Polars**.
 
-
-However, thanks to modern tools, we can now compute a large volume of data on a single machine, no matter the available memory. 
+Thanks to modern tools, we can now compute a large volume of data on a single machine, no matter the available memory.
 Here are the processing time to crawl the whole dataset for any query I wrote:
 
 | Engine  | Processing time |
-|---------|-----------------|
-| Polars  | `< 50s`          |
-| Pyspark | `< 30s`          |
+| ------- | --------------- |
+| Polars  | `< 50s`         |
+| Pyspark | `< 30s`         |
 
 <Grid cols=2>
     <Image 
         url="https://www.bigdatawire.com/wp-content/uploads/2024/10/Polars_logo_1.png"
-        description="Sample placeholder image"
+        description="Polars logo"
         height=200
     />
     <Image 
             url="https://images.seeklogo.com/logo-png/34/2/apache-spark-logo-png_seeklogo-349535.png"
-            description="Sample placeholder image"
+            description="Spark logo"
             height=200
     />
 </Grid>
 
-
-
-As the input data is a collection of `.jsonl` files, every query had to parse the whole 34GB of content. 
+As the input data is a collection of `.jsonl` files, every query had to parse the whole 34GB of content.
 This is why the queries are relatively slow compared to `.parquet` or Arrow formats. Even CSV files would have been faster to process.
 
 Read [this article](https://medium.com/@ManueleCaddeo/understanding-jsonl-bc8922129f5b) to know more about `.jsonl` format.
 
 To create this page, I used [the awesome tool Evidence](https://evidence.dev/).
 
+</Details>
+
+<Details title="🇫🇷 Cliquez ici pour plus de détails sur le contexte et les outils">
+
+Cette page présente davantage un travail de **data engineering** qu'une analyse de données. Cependant, comme il n'est pas simple de présenter ce type de développement, j'ai souhaité présenter les résultats obtenus dans un format plus accessible.
+
+Ce document ne se veut donc **pas être un travail exhaustif de data analyse**, mais une _indication_ que **les analyses volumineuses et l'exploration de données ne nécessitent pas nécessairement des clusters coûteux** de machines pour être conduites:
+
+- la totalité de Wikipedia peut être traitée en 30s sur une seule machine
+- l'exploration de données plus loin dans cette page s'exécute entièrement dans le navigateur, sans serveur distant
+
+## Quelles données ?
+
+Le jeu de données contient les articles de Wikipedia. J'ai choisi ce jeu de données car un sous-ensemble de taille raisonnable était déjà disponible : **un dump de tous les articles français de Wikipedia (34GB)**.
+Voici la description officielle de ce jeu de données :
+
+> Ce jeu de données contient tous les articles des éditions anglaise et française de Wikipedia, pré-parsés et produits en tant que fichiers JSON structurés avec un schéma cohérent (JSONL compressé en zip). Chaque ligne JSON contient le contenu d'un article Wikipedia complet, dépouillé de la markdown supplémentaire et des sections non-texte (références, etc.).
+>
+> https://huggingface.co/datasets/wikimedia/structured-wikipedia#dataset-summary
+
+|              | Informations sur le jeu de données                             |
+| ------------ | -------------------------------------------------------------- |
+| Contenu      | Wikipedia français                                             |
+| Taille       | 34GB                                                           |
+| Date du dump | 16 septembre 2024                                              |
+| Source       | https://huggingface.co/datasets/wikimedia/structured-wikipedia |
+|              |                                                                |
+
+## Quels outils ?
+
+Pour interroger le jeu de données et effectuer les calculs analytiques présents dans le document, j'ai créé quelques requêtes en **Pyspark** et **Polars**.
+
+Grace à ces outils modernes, nous pouvons maintenant traiter un grand volume de données sur une seule machine, quelle que soit la mémoire disponible.
+Voici les temps de traitement pour parcourir l'ensemble des données pour chaque requête:
+
+| Data engine | Temps de traitement |
+| ----------- | ------------------- |
+| Polars      | `< 50s`             |
+| Pyspark     | `< 30s`             |
+
+<Grid cols=2>
+    <Image 
+        url="https://www.bigdatawire.com/wp-content/uploads/2024/10/Polars_logo_1.png"
+        description="logo Polars"
+        height=200
+    />
+    <Image 
+            url="https://images.seeklogo.com/logo-png/34/2/apache-spark-logo-png_seeklogo-349535.png"
+            description="logo Spark"
+            height=200
+    />
+</Grid>
+
+Comme les données d'entrée sont une collection de fichiers `.jsonl`, chaque requête doit lire la totalité des 34GB de contenu.
+C'est pourquoi les requêtes sont relativement lentes comparées aux formats `.parquet` ou Arrow. Même les fichiers CSV auraient été plus rapides à traiter.
+
+[Cet article](https://medium.com/@ManueleCaddeo/understanding-jsonl-bc8922129f5b) donne plus de détails sur le format `.jsonl`.
+
+Pour créer cette page, j'ai utilisé [l'excellent outil Evidence](https://evidence.dev/).
 
 </Details>
 
@@ -109,7 +157,6 @@ Here are some statistics about the content of French Wikipedia.
   fmt=num1k
 />
 
-
 So French Wikipedia contains **2.7** million articles, that represents **22 billion characters** ! This is equivalent of **reading Romeo and Juliet 150 000 times**.
 
 <Image 
@@ -117,7 +164,6 @@ So French Wikipedia contains **2.7** million articles, that represents **22 bill
     description="Sample placeholder image"
     height=200
 />
-
 
 ## Creation timeline
 
@@ -142,13 +188,11 @@ Here is a timeline of the creation of articles, every quarter from year 2001.
     xAxisTitle="Date"
 />
 
-
-
 # ⚽️ Footballer stats
 
 In this section, you can explore some statistics about football players present in the French Wikipedia.
 
-[//]: # (Data selectors for football)
+[//]: # "Data selectors for football"
 
 ```sql countries_football
   select
@@ -176,7 +220,6 @@ In this section, you can explore some statistics about football players present 
           step=1
         />
 </div>
-   
 
 </Grid>
 
@@ -187,9 +230,7 @@ In this section, you can explore some statistics about football players present 
       fmt=id
     />
 
-
-
-[//]: # (Computed selected data for football)
+[//]: # "Computed selected data for football"
 
 ```sql football_right_vs_left
 with src as (select * from files.footballer_stats where foot in ('left', 'right'))
@@ -206,7 +247,7 @@ order by country_ref
   select
     a.country_ref,
     a.foot,
-    a.n_players,avg_height, 
+    a.n_players,avg_height,
     b.pct_right
   from files.footballer_stats a
   left join ${football_right_vs_left} b on a.country_ref=b.country_ref
@@ -223,36 +264,35 @@ order by country_ref
   from ${football_selected_data}
 ```
 
-[//]: # (Graphs for football)
+[//]: # "Graphs for football"
 
 ## Players by country
 
-
 <BarChart
-    data={football_selected_data}
-    colorPaletteBkp={['#cf0d06','#eb5752','#e88a87']}
-    colorPalette={['#c40000','#df6242','#f39e84','#ffd8cb']}
-    title="Total players"
-    x=country_ref
-    y=n_players
-    series=foot
-    yAxisTitle="players"
-    sort=false
+data={football_selected_data}
+colorPaletteBkp={['#cf0d06','#eb5752','#e88a87']}
+colorPalette={['#c40000','#df6242','#f39e84','#ffd8cb']}
+title="Total players"
+x=country_ref
+y=n_players
+series=foot
+yAxisTitle="players"
+sort=false
 />
 
 ## Right or left foot ?
 
-Here is a plot displaying the ration of right-footed players compared to the total of players of the country. For most of the countries, the ratio is around 70%. 
+Here is a plot displaying the ration of right-footed players compared to the total of players of the country. For most of the countries, the ratio is around 70%.
 
 <ScatterPlot
-    data={football_selected_data}
-    colorPaletteBkp={['#cf0d06','#eb5752','#e88a87']}
-    colorPalette={['#c40000','#df6242','#f39e84','#ffd8cb']}
-    title="Percentage of right-footed players"
-    x=country_ref
-    y=pct_right
-    yAxisTitle="%"
-    sort=false
+data={football_selected_data}
+colorPaletteBkp={['#cf0d06','#eb5752','#e88a87']}
+colorPalette={['#c40000','#df6242','#f39e84','#ffd8cb']}
+title="Percentage of right-footed players"
+x=country_ref
+y=pct_right
+yAxisTitle="%"
+sort=false
 />
 
 # 🎬 Movies
@@ -267,7 +307,7 @@ Here is a plot displaying the ration of right-footed players compared to the tot
 ```
 
 ```sql movies_top_genres
-    with 
+    with
     g as (select genre, sum(n_movies) as n_movies from files.films group by genre),
     top_g as (select genre, n_movies from g order by n_movies DESC limit 10)
     select genre, n_movies from top_g limit ${inputs.movies_genres_limit}
@@ -307,16 +347,16 @@ You can explore the movies present in Wikipedia. Country, genres and durations a
 />
 
 ```sql movies_top_countries
-    with 
+    with
     c as (select country, sum(n_movies) as n_movies from files.films group by country),
     top_c as (select country, n_movies from c order by n_movies DESC limit ${inputs.movies_countries_limit})
     select country, n_movies from top_c
 ```
 
 ```sql movies_by_genre_country
-  select 
+  select
   g.genre, f.country, f.avg_duration, f.n_movies
-  from 
+  from
     files.films f
     right join ${movies_top_genres} g on g.genre=f.genre
     right join ${movies_top_countries} tc on tc.country=f.country
@@ -329,30 +369,27 @@ You can explore the movies present in Wikipedia. Country, genres and durations a
 ```
 
 <BarChart
-    data={movies_by_genre_country}
-    title="Total movies, {inputs.country.label}"
-    x=country
-    y=n_movies
-    series=genre
-    colorPalette={["#003f5c","#2f4b7c","#665191","#a05195","#d45087","#f95d6a","#ff7c43","#ffa600"]}
-    colorPaletteGreen={["#20982a","#40a23f","#58ad53","#6db767","#81c17a","#95cc8d","#a8d6a1","#bbe0b5","#ceeac9"]}
-    yAxisTitle="movies"
+data={movies_by_genre_country}
+title="Total movies, {inputs.country.label}"
+x=country
+y=n_movies
+series=genre
+colorPalette={["#003f5c","#2f4b7c","#665191","#a05195","#d45087","#f95d6a","#ff7c43","#ffa600"]}
+colorPaletteGreen={["#20982a","#40a23f","#58ad53","#6db767","#81c17a","#95cc8d","#a8d6a1","#bbe0b5","#ceeac9"]}
+yAxisTitle="movies"
 />
 
 ## Duration by genre
 
 ```sql boxplot_films_by_genre
-  select 
+  select
     UPPER(SUBSTRING(f.genre, 1, 1)) || SUBSTRING(f.genre, 2) as genre,
     f.n_movies,dur_q1,dur_q3,max_duration,min_duration,avg_duration,median_duration
-  from 
+  from
     files.films_by_genre f
     right join ${movies_top_genres} g on g.genre=f.genre
   order by median_duration DESC
 ```
-
-
-
 
 <Grid cols=2>
     <Image 
@@ -364,8 +401,6 @@ You can explore the movies present in Wikipedia. Country, genres and durations a
     Here is the distribution of all movies durations among the selected genres.
     </p>
 </Grid>
-
-
 
 <BoxPlot 
     data={boxplot_films_by_genre}
@@ -384,18 +419,15 @@ You can explore the movies present in Wikipedia. Country, genres and durations a
 Number of skyscrapers for each country, with the height of the tallest building.
 
 ```sql skyscrapers_top_countries
-    with 
+    with
     c as (select country, sum(n_skyscrapers) as n_skyscrapers from files.skyscrapers group by country),
     top_c as (select country, n_skyscrapers from c order by n_skyscrapers DESC limit ${inputs.skyc_countries_limit})
     select country, n_skyscrapers from top_c
 ```
 
-
 ```sql skyscrapers_stats
     select sum(n_skyscrapers) as skyscrapers_total from ${skyscrapers_top_countries}
 ```
-
-
 
 ```sql skyscrapers
   select
@@ -433,7 +465,6 @@ Number of skyscrapers for each country, with the height of the tallest building.
     yAxisTitle="buildings"
 />
 
-
 ## Search the data
 
 With this table, you can search, sort and export the data you need.
@@ -446,14 +477,15 @@ With this table, you can search, sort and export the data you need.
     <Column id=avg_height title="Height avg (m)" totalAgg=mean fmt='#,##0"m"' contentType=colorscale colorScale=positive/>
 </DataTable>
 
-*Note:* Some Skyscrapers data can be related to projects that haven't been finished as it is the case for [this 750m tower in France](https://fr.wikipedia.org/wiki/Tour_Tourisme_TV).
+_Note:_ Some Skyscrapers data can be related to projects that haven't been finished as it is the case for [this 750m tower in France](https://fr.wikipedia.org/wiki/Tour_Tourisme_TV).
 
 # What next ?
 
 <Details title="Next steps">
 
-    Analyse the changes of Wikipedia in **real-time**. 
-    
+    Analyse the changes of Wikipedia in **real-time**.
+
     For this, Wikipedia provides an [EventStreams HTTP Service](https://wikitech.wikimedia.org/wiki/Event_Platform/EventStreams_HTTP_Service) all the events in real_time.
     The tools I will use for this task will be [Apache Kafka](https://kafka.apache.org/), [Apache Flink](https://flink.apache.org/) (and probably [Apache Beam](https://beam.apache.org/))
+
 </Details>
