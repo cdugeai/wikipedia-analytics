@@ -8,5 +8,7 @@ analysis:
 	uv run python3 analysis.py
 analysis_table_api:
 	uv run python3 analysis_table_api.py
+analysis_stream_string:
+	uv run python3 analysis_stream_string.py
 format:
 	uv run ruff format
