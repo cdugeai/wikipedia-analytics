@@ -12,8 +12,15 @@ class KafkaTopic:
         )
         self.topic_name: str = topic_name
 
-    def send(self, msg: object):
-        self.producer.send(self.topic_name, value=msg)
+    def send(self, msg: dict):
+        self.producer.send(
+            self.topic_name,
+            value=msg,
+            key=msg.get("wiki").encode("utf-8"),
+            headers=[
+                ("server_name", msg.get("server_name").encode("utf-8")),
+            ],
+        )
         self.msg_sent += 1
         print("Sent:", self.msg_sent)
 

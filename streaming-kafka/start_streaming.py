@@ -1,7 +1,6 @@
-import requests
 import signal
 from KafkaTopic import KafkaTopic
-from wiki_helpers import format_change, stream_changes
+from wiki_helpers import stream_changes
 
 
 # Generate a signal handle with custom function
@@ -29,3 +28,4 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"Error: {e}")
         close_producer()
+        raise e
