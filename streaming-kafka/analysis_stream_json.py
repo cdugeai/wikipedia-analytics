@@ -49,7 +49,7 @@ def create_flink_job():
     MINUTE = 60 * SECOND
     WINDOW_DURATION = 3
     WINDOW_BUFFER = 1
-    FILTER_WIKIS = True
+    FILTER_WIKIS = False
     FILTERED_WIKIS = ["enwiki", "frwiki"]
 
     # Create a StreamExecutionEnvironment
@@ -100,7 +100,7 @@ def create_flink_job():
     # Print messages to terminal
     result = (
         ds.map(parse_row)
-        .filter(lambda msg: FILTER_WIKIS & (msg.get("wiki") in FILTERED_WIKIS))
+        .filter(lambda msg: (msg.get("wiki") in FILTERED_WIKIS) if FILTER_WIKIS else True)
         .map(
             lambda msg: (msg.get("wiki"), 1),
             output_type=Types.TUPLE([Types.STRING(), Types.INT()]),
@@ -143,12 +143,6 @@ def create_flink_job():
         INSERT INTO csv_sink
         select * from InputTable
         """)
-    res_table = table_env.sql_query("SELECT * FROM InputTable")
-    # interpret the insert-only Table as a DataStream again
-    res_ds = table_env.to_data_stream(res_table)
-    # add a printing sink and execute in DataStream API
-    res_ds.print()
-
 
     # Execute the job
     env.execute("JSON Parsing with Schema")
