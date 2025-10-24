@@ -7,6 +7,7 @@ from pyflink.common import WatermarkStrategy, Types, Duration, Time
 from pyflink.datastream import StreamExecutionEnvironment
 from pyflink.common.serialization import SimpleStringSchema
 from pyflink.datastream.window import TumblingEventTimeWindows
+from pyflink.datastream.functions import ProcessWindowFunction
 from pyflink.datastream.connectors.kafka import KafkaOffsetsInitializer, KafkaSource
 from pyflink.common.watermark_strategy import TimestampAssigner
 
@@ -48,11 +49,19 @@ def create_flink_job():
     FILTER_WIKIS = True
     FILTERED_WIKIS = ["enwiki", "frwiki"]
 
-    
     # Create a StreamExecutionEnvironment
     env = StreamExecutionEnvironment.get_execution_environment()
-    jar_path = os.path.abspath("./jars/flink-sql-connector-kafka-4.0.1-2.0.jar")
-    env.add_jars(f"file:///{jar_path}")
+    jar_paths = [
+        # "./jars/flink-sql-jdbc-driver-bundle-2.1.0.jar",
+        "./jars/flink-sql-connector-kafka-4.0.1-2.0.jar",
+        # "./jars/flink-sql-jdbc-driver-bundle-2.0.0.jar",
+        # "./jars/flink-connector-jdbc-postgres-4.0.0-2.0.jar",
+        # "./jars/postgresql-42.7.3.jar",
+        # "./jars/flink-connector-jdbc-3.1.2–1.18.jar",
+        # "./jars/flink-connector-jdbc-3.3.0-1.20.jar",
+    ]
+
+    env.add_jars(*[f"file:///{os.path.abspath(jar_path)}" for jar_path in jar_paths])
     env.set_parallelism(1)
 
     # Define watermark strategy with 5 seconds out-of-order tolerance
@@ -88,13 +97,28 @@ def create_flink_job():
         )
         .key_by(lambda x: x[0])
         .window(TumblingEventTimeWindows.of(Time.seconds(WINDOW_DURATION)))
-        .reduce(lambda a, b: (a[0], a[1] + b[1]))
-        .map(lambda x: f"Articles in {x[0]}: {x[1]}")
+        .process(
+            CountWithWindowInfo(),
+            output_type=Types.TUPLE(
+                # window.start, window.end, wiki, count
+                [Types.LONG(), Types.LONG(), Types.STRING(), Types.INT()]
+            ),
+        )
+        # .reduce(lambda a, b: (a[0], a[1] + b[1]))
     )
-    result.print()
+
+    result.map(lambda x: f"Window {x[0]}+{WINDOW_DURATION}s for {x[2]}: {x[3]}").print()
 
     # Execute the job
     env.execute("JSON Parsing with Schema")
+
+
+class CountWithWindowInfo(ProcessWindowFunction):
+    def process(self, key, context, elements):
+        # Count the elements for a given key
+        count = len(list(elements))
+        window = context.window()
+        yield (window.start, window.end, key, count)
 
 
 class ExtractTimestampFromMessage(TimestampAssigner):
