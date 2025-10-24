@@ -45,6 +45,8 @@ def parse_row(json_row: str):
 def create_flink_job():
     """Create a Flink job that reads from Kafka and prints to terminal"""
 
+    SECOND = 1000
+    MINUTE = 60 * SECOND
     WINDOW_DURATION = 3
     WINDOW_BUFFER = 1
     FILTER_WIKIS = True
@@ -52,6 +54,8 @@ def create_flink_job():
 
     # Create a StreamExecutionEnvironment
     env = StreamExecutionEnvironment.get_execution_environment()
+    # mandatory to sink to CSV
+    env.enable_checkpointing(5 * MINUTE)
     table_env = StreamTableEnvironment.create(env)
 
     jar_paths = [
@@ -59,9 +63,12 @@ def create_flink_job():
         "./jars/flink-sql-connector-kafka-4.0.1-2.0.jar",
         # "./jars/flink-sql-jdbc-driver-bundle-2.0.0.jar",
         # "./jars/flink-connector-jdbc-postgres-4.0.0-2.0.jar",
-        # "./jars/postgresql-42.7.3.jar",
+        "./jars/postgresql-42.7.3.jar",
         # "./jars/flink-connector-jdbc-3.1.2–1.18.jar",
-        # "./jars/flink-connector-jdbc-3.3.0-1.20.jar",
+        "./jars/flink-connector-jdbc-3.3.0-1.20.jar",
+        "./jars/flink-sql-jdbc-driver-2.1.0.jar",
+        # "./jars/streampark-flink-connector-jdbc_2.12-2.1.0.jar",
+        "./jars/flink-connector-jdbc_2.11-1.14.6.jar",
     ]
 
     env.add_jars(*[f"file:///{os.path.abspath(jar_path)}" for jar_path in jar_paths])
@@ -114,8 +121,28 @@ def create_flink_job():
 
     # [TABLE_API] Convert to Table
     table = table_env.from_data_stream(result)
+
+    table_env.execute_sql("""
+    CREATE TABLE csv_sink (
+        win_start BIGINT, 
+        win_end BIGINT, 
+        wiki STRING,
+        cnt INT
+    ) WITH (
+      'connector' = 'filesystem',
+      'path' = './wiki-count-csv/',  -- target directory
+      'format' = 'csv',              -- uses built-in csv format
+      'csv.field-delimiter' = ',',
+      'sink.rolling-policy.rollover-interval' = '60 s'
+    )
+    """)
+
     # register the Table object as a view and query it
     table_env.create_temporary_view("InputTable", table)
+    table_env.execute_sql("""
+        INSERT INTO csv_sink
+        select * from InputTable
+        """)
     res_table = table_env.sql_query("SELECT * FROM InputTable")
     # interpret the insert-only Table as a DataStream again
     res_ds = table_env.to_data_stream(res_table)
