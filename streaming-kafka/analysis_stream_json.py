@@ -5,6 +5,7 @@ import time
 import json
 from pyflink.common import WatermarkStrategy, Types, Duration, Time
 from pyflink.datastream import StreamExecutionEnvironment
+from pyflink.table import StreamTableEnvironment
 from pyflink.common.serialization import SimpleStringSchema
 from pyflink.datastream.window import TumblingEventTimeWindows
 from pyflink.datastream.functions import ProcessWindowFunction
@@ -51,6 +52,8 @@ def create_flink_job():
 
     # Create a StreamExecutionEnvironment
     env = StreamExecutionEnvironment.get_execution_environment()
+    table_env = StreamTableEnvironment.create(env)
+
     jar_paths = [
         # "./jars/flink-sql-jdbc-driver-bundle-2.1.0.jar",
         "./jars/flink-sql-connector-kafka-4.0.1-2.0.jar",
@@ -108,6 +111,17 @@ def create_flink_job():
     )
 
     result.map(lambda x: f"Window {x[0]}+{WINDOW_DURATION}s for {x[2]}: {x[3]}").print()
+
+    # [TABLE_API] Convert to Table
+    table = table_env.from_data_stream(result)
+    # register the Table object as a view and query it
+    table_env.create_temporary_view("InputTable", table)
+    res_table = table_env.sql_query("SELECT * FROM InputTable")
+    # interpret the insert-only Table as a DataStream again
+    res_ds = table_env.to_data_stream(res_table)
+    # add a printing sink and execute in DataStream API
+    res_ds.print()
+
 
     # Execute the job
     env.execute("JSON Parsing with Schema")
