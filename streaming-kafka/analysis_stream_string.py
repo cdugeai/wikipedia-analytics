@@ -9,6 +9,7 @@ from pyflink.datastream.connectors.kafka import KafkaOffsetsInitializer, KafkaSo
 KAFKA_BROKER = "localhost:9092"
 KAFKA_TOPIC = "wiki_data"
 
+
 def create_flink_job():
     """Create a Flink job that reads from Kafka and prints to terminal"""
 
