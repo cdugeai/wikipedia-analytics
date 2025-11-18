@@ -1,38 +1,48 @@
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment
 import org.apache.flink.util.Collector
-import org.apache.flink.api.common.typeinfo.{TypeInformation, Types}
-import org.apache.flink.streaming.api.datastream.DataStream
 import org.apache.flink.api.common.functions.FlatMapFunction
 import org.apache.flink.api.java.tuple.Tuple2
+import org.apache.flink.api.java.functions.KeySelector
 
-//import org.apache.flink.api.createTypeInformation
-
-object WordCountJob:
-  def main(args: Array[String]): Unit = 
+object WordCountJob {
+  def main(args: Array[String]): Unit = {
+    // get the environment
     val env = StreamExecutionEnvironment.getExecutionEnvironment
-    
-    val text = env.fromElements(
-      "Hello World",
-      "Hello Flink",
-      "Flink Scala API"
-    )
-    // Use explicit TypeInformation
-    val words = text.flatMap(
-      new FlatMapFunction[String, String] {
-        override def flatMap(value: String, out: Collector[String]): Unit = {
-          value.toLowerCase.split("\\W+").filter(_.nonEmpty).foreach(out.collect)
-        }
-      },
-      Types.STRING  // Explicit type information
-    )
-    
+    env.setParallelism(1)
 
+    // sample input (replace with env.readTextFile(...) or socket stream as needed)
+    val text = env.fromElements(
+      "To be, or not to be: that is the question",
+      "Whether 'tis nobler in the mind to suffer",
+      "To die, to sleep"
+    )
+
+    // FlatMap: split lines into (word, 1) tuples
+    val words = text.flatMap(new FlatMapFunction[String, Tuple2[String, Integer]] {
+      override def flatMap(value: String, out: Collector[Tuple2[String, Integer]]): Unit = {
+        val tokens = value.toLowerCase.split("\\W+")
+        var i = 0
+        while (i < tokens.length) {
+          val t = tokens(i)
+          if (t.nonEmpty) {
+            // note: use java.lang.Integer (boxed) for Flink Tuple2<int> semantics
+            out.collect(new Tuple2(t, Integer.valueOf(1)))
+          }
+          i += 1
+        }
+      }
+    })
+
+    // Key by the word (f0) and sum the counts (f1)
     val counts = words
-      .map(word => new Tuple2(word, Int.box(1)))
-      .returns(Types.TUPLE(Types.STRING, Types.INT))
-      .keyBy(t => t.f0)
+      .keyBy(new KeySelector[Tuple2[String, Integer], String] {
+        override def getKey(value: Tuple2[String, Integer]): String = value.f0
+      })
       .sum(1)
 
+    // print to stdout
     counts.print()
-    
-    env.execute("WordCount Example")
+
+    env.execute("Scala 3 WordCount (using Java DataStream API)")
+  }
+}

@@ -1,5 +1,5 @@
 val scala3Version = "3.6.2"
-val flinkVersion = "2.1.0" // Matching Flink cluster's version
+val flinkVersion = "2.1.1" // Matching Flink cluster's version
 
 lazy val root = project
   .in(file("."))
@@ -20,6 +20,7 @@ libraryDependencies ++= Seq(
   //"org.apache.flink" %% "flink-clients" % flinkVersion % "provided",
 
   // [ JAVA API ] Use Java APIs (no %%)
+  "org.apache.flink" % "flink-core" % flinkVersion % "provided",
   "org.apache.flink" % "flink-streaming-java" % flinkVersion % "provided",
   "org.apache.flink" % "flink-clients" % flinkVersion % "provided",
   //"org.apache.flink" % "flink-connector-kafka" % flinkVersion

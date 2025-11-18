@@ -31,7 +31,7 @@ services:
     depends_on:
       - kafka
   jobmanager:
-    image: flink:latest
+    image: flink:2.1.1-java21
     ports:
       - "8081:8081"
     command: jobmanager
@@ -41,7 +41,7 @@ services:
         jobmanager.rpc.address: jobmanager
 
   taskmanager:
-    image: flink:latest
+    image: flink:2.1.1-java21
     depends_on:
       - jobmanager
     command: taskmanager
