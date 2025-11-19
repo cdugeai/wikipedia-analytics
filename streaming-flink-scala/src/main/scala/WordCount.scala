@@ -1,41 +1,22 @@
-import org.apache.flink.streaming.api.scala._
-import org.apache.flink.api.common.functions.{FlatMapFunction, FilterFunction, MapFunction}
-import org.apache.flink.api.java.functions.KeySelector
-import org.apache.flink.util.Collector
+import org.apache.flinkx.api.*
+import org.apache.flinkx.api.serializers.*
 
-object WordCountJob {
-  def main(args: Array[String]): Unit = {
-    val env = StreamExecutionEnvironment.getExecutionEnvironment
-    env.setParallelism(1)
+@main def wordCount =
+  val env = StreamExecutionEnvironment.getExecutionEnvironment
+  
 
-    val text: DataStream[String] = env.fromElements(
-      "To be, or not to be: that is the question",
-      "Whether 'tis nobler in the mind to suffer",
-      "To die, to sleep"
-    )
+  val text = env.fromElements(
+    "To be, or not to be,--that is the question:--",
+    "Whether 'tis nobler in the mind to suffer",
+    "The slings and arrows of outrageous fortune",
+    "Or to take arms against a sea of troubles,"
+  )
 
-    val counts = text
-      .flatMap(new FlatMapFunction[String, String] {
-        override def flatMap(value: String, out: Collector[String]): Unit = {
-          val words = value.toLowerCase.split("\\W+")
-          var i = 0
-          while (i < words.length) {
-            if (words(i).nonEmpty) {
-              out.collect(words(i))
-            }
-            i += 1
-          }
-        }
-      })
-      .map(new MapFunction[String, (String, Int)] {
-        override def map(value: String): (String, Int) = (value, 1)
-      })
-      .keyBy(new KeySelector[(String, Int), String] {
-        override def getKey(value: (String, Int)): String = value._1
-      })
-      .sum(1)
+  text
+    .flatMap(_.toLowerCase.split("\\W+"))
+    .map((_, 1))
+    .keyBy(_._1)
+    .sum(1)
+    .print()
 
-    counts.print()
-    env.execute("Scala 2 WordCount")
-  }
-}
+  env.execute("wordCount")

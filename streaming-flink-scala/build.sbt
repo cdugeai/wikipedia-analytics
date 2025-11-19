@@ -16,12 +16,14 @@ lazy val root = project
 
 libraryDependencies ++= Seq(
   // [ SCALA API ] Flink deps not compatible with Scala 3
-  "org.apache.flink" %% "flink-scala" % flinkVersion % "provided",
-  "org.apache.flink" %% "flink-streaming-scala" % flinkVersion % "provided",
+  //"org.apache.flink" %% "flink-scala" % flinkVersion % "provided",
+  //"org.apache.flink" %% "flink-streaming-scala" % flinkVersion % "provided",
   // [ JAVA API ] Flink deps not compatible with Scala 3
   //"org.apache.flink" % "flink-clients" % flinkVersion % "provided",
 
 
+  "org.flinkextended" %% "flink-scala-api-1" % "1.2.6",
+  "org.apache.flink" % "flink-clients" % flinkVersion % "provided",
   //"org.flinkextended" %% "flink-scala-api" % "1.20.0_1.2.0",
   //"org.apache.flink" % "flink-clients" % "1.20.3"
 
