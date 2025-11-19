@@ -31,7 +31,7 @@ services:
     depends_on:
       - kafka
   jobmanager:
-    image: flink:latest
+    image: flink:2.1.1-java21
     ports:
       - "8081:8081"
     command: jobmanager
@@ -41,7 +41,7 @@ services:
         jobmanager.rpc.address: jobmanager
 
   taskmanager:
-    image: flink:latest
+    image: flink:2.1.1-java21
     depends_on:
       - jobmanager
     command: taskmanager
@@ -51,3 +51,17 @@ services:
         FLINK_PROPERTIES=
         jobmanager.rpc.address: jobmanager
         taskmanager.numberOfTaskSlots: 2
+  postgres:
+    image: postgres:latest
+    # set shared memory limit when using docker compose
+    shm_size: 128mb
+    # or set shared memory limit when deploy via swarm stack
+    #volumes:
+    #  - type: tmpfs
+    #    target: /dev/shm
+    #    tmpfs:
+    #      size: 134217728 # 128*2^20 bytes = 128Mb
+    environment:
+      POSTGRES_PASSWORD: example
+      POSTGRES_USER: postgres
+      POSTGRES_DB: wiki_db
