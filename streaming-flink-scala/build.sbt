@@ -5,7 +5,7 @@ lazy val root = project
   .in(file("."))
   .settings(
     name := "streaming-flink-scala",
-    version := "0.1.0-SNAPSHOT",
+    version := "0.1.0",
 
     scalaVersion := scala3Version,
 
