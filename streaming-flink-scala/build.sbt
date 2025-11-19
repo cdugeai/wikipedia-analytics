@@ -8,7 +8,7 @@ lazy val root = project
     name := "streaming-flink-scala",
     version := "0.2.0",
 
-    scalaVersion := scala2Version,
+    scalaVersion := scala3Version,
 
     libraryDependencies += "org.scalameta" %% "munit" % "1.0.0" % Test,
 
