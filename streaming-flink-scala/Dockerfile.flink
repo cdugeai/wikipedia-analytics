@@ -1,0 +1,11 @@
+ARG FLINK_LABEL
+FROM flink:${FLINK_LABEL}
+
+ARG SCALA_VERSION
+
+# Add scala library so the Flink cluster provides scala runtime for jobs (avoid lambda deserialization issues)
+RUN curl -fSL "https://repo1.maven.org/maven2/org/scala-lang/scala-library/${SCALA_VERSION}/scala-library-${SCALA_VERSION}.jar" -o /opt/flink/lib/scala-library-${SCALA_VERSION}.jar \
+  && chown root:root /opt/flink/lib/scala-library-${SCALA_VERSION}.jar \
+  && chmod 644 /opt/flink/lib/scala-library-${SCALA_VERSION}.jar
+
+EXPOSE 8081

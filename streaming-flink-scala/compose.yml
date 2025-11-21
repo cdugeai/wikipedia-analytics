@@ -1,0 +1,36 @@
+services:
+  jobmanager:
+    container_name: flink_jobmanager
+    command: jobmanager
+    build:
+      context: .
+      dockerfile: Dockerfile.flink
+      args:
+        FLINK_LABEL: 1.20.3-scala_2.12-java11
+        SCALA_VERSION: 2.12.18
+    ports:
+      - "8081:8081"
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+    volumes:
+      - ./jars:/opt/flink/usrlib
+
+  taskmanager:
+    container_name: flink_taskmanager
+    command: taskmanager
+    build:
+      context: .
+      dockerfile: Dockerfile.flink
+      args:
+        FLINK_LABEL: 1.20.3-scala_2.12-java11
+        SCALA_VERSION: 2.12.18
+    scale: 1
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+        taskmanager.numberOfTaskSlots: 2
+    depends_on:
+      - jobmanager
