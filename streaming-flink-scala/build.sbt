@@ -11,7 +11,9 @@ libraryDependencies ++= Seq(
   "org.apache.flink" %% "flink-streaming-scala" % flinkVersion % "provided",
   "org.apache.flink" % "flink-clients" % flinkVersion % "provided",
   "org.scalatest" %% "scalatest" % "3.2.15" % Test,
-  "org.slf4j" % "slf4j-api" % "2.0.17" % "provided"
+  "org.slf4j" % "slf4j-api" % "2.0.17" % "provided",
+  "org.apache.flink" % "flink-connector-kafka" % "1.17.0"
+
 )
 
 // Ensure the scala-library version you compile with is deterministic
@@ -21,10 +23,11 @@ dependencyOverrides += "org.scala-lang" % "scala-library" % scalaVersion.value
 Compile / fork := true
 Test / fork := true
 
+Compile / mainClass := Some("com.example.KafkaReader")
+
 
 // Assembly configuration
-
-assembly / mainClass := Some("com.example.WordCountJob")
+assembly / mainClass := Some("com.example.KafkaReader")
 
 // Exclude Scala from deps when building fat JAR
 assembly / assemblyOption := (assembly / assemblyOption).value.copy(includeScala = false)
