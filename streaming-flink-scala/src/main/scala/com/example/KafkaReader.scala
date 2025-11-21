@@ -2,20 +2,33 @@ package com.example
 
 import org.apache.flink.streaming.api.scala._
 import com.example.model.WikipediaUpdate
+import com.example.utils.JsonDeserializer
+import org.apache.flink.connector.kafka.source.KafkaSource
+import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer
+import org.apache.flink.api.common.serialization.SimpleStringSchema
+import org.apache.flink.api.common.eventtime.WatermarkStrategy
 
 object KafkaReader {
   def main(args: Array[String]): Unit = {
     val env = StreamExecutionEnvironment.getExecutionEnvironment
     
-    val testStreamOne: DataStream[WikipediaUpdate] = env.fromCollection(Seq(
-      WikipediaUpdate("wiki_fr", 1686122515, "user_1"),
-      WikipediaUpdate("wiki_en", 1686208915, "user_2")
-    ))
+    val kafkaSource = KafkaSource
+      .builder()
+      .setBootstrapServers("kafka:9093")
+      .setTopics("wiki_data")
+      .setGroupId("flink-consumer-group")
+      .setProperty("receive.message.max.bytes", "200M")
+      .setStartingOffsets(OffsetsInitializer.earliest())
+      //.setValueOnlyDeserializer(new SimpleStringSchema())
+      .setValueOnlyDeserializer(new JsonDeserializer[WikipediaUpdate](classOf[WikipediaUpdate]))
+      .build()
+
+    val lines = env.fromSource(kafkaSource, WatermarkStrategy.noWatermarks(), "Kafka Source")
+
     
-    testStreamOne.print("OutputStream1").setParallelism(2)
+    lines.print("OutputStream1").setParallelism(2)
 
-    testStreamOne.print()
 
-    env.execute("Read sample data")
+    env.execute("Read from Kafka")
   }
 }

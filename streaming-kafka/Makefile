@@ -1,5 +1,3 @@
-kafka-flink:
-	docker compose up
 manual_input:
 	uv run python3 manual_input.py
 streaming:
