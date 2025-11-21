@@ -1,19 +1,28 @@
-# Flink analysis
+# Scala - Flink
 
-## Usage
+Start a Flink cluster and execute Scala code in it.
 
-Once, download Scala dependencies:
+This is code for versions:
+
+- Flink: 1.20.3
+- Scala: 2.12.18
+
+## Available commands
+
+Locally:
 
 ```sh
-# (once) Download dependencies
-make update
+# Execute the Flink code
+make local.run
 ```
 
-Then, when updating the code:
+On the cluster:
 
 ```sh
-# Compile and bundle projet as JAR
-make build
-# Upload the JAR on Flink cluster manually or with:
-make upload
+# Build locally the JAR to be sent to the cluster
+make cluster.build
+# Send the JAR to the cluster and run it
+make cluster.submit
+# Show logs of the job in the cluster
+make cluster.logs
 ```
