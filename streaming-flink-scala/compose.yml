@@ -2,6 +2,9 @@ services:
   jobmanager:
     container_name: flink_jobmanager
     command: jobmanager
+    env_file:
+      - .env
+      - .docker.env
     build:
       context: .
       dockerfile: Dockerfile.flink
@@ -20,6 +23,9 @@ services:
   taskmanager:
     container_name: flink_taskmanager
     command: taskmanager
+    env_file:
+      - .env
+      - .docker.env
     build:
       context: .
       dockerfile: Dockerfile.flink

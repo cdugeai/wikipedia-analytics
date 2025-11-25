@@ -16,6 +16,8 @@ import org.apache.flink.util.Collector
 import org.apache.flink.api.common.eventtime.SerializableTimestampAssigner
 import com.fasterxml.jackson.module.scala.deser.overrides
 
+import com.example.alert.AlerterPushover
+
 // Type for the gathered results
 case class WindowResult(windowStart: Long, windowEnd: Long, wiki: String, totalUpdates: Int, distinctUsers: Int)
 
@@ -44,14 +46,17 @@ class GatherRecords extends ProcessWindowFunction[WikipediaUpdate, WindowResult,
 object KafkaReader {
   def main(args: Array[String]): Unit = {
     val env = StreamExecutionEnvironment.getExecutionEnvironment
-    
+    val kafka_addr: String = sys.env.get("KAFKA_ADDR").getOrElse("MISSING KAFKA_ADDR")
+    println("Kafka cluster: >> "+kafka_addr)
+
     val kafkaSource = KafkaSource
       .builder()
       .setBootstrapServers("kafka:9093")
+      .setBootstrapServers(kafka_addr)
       .setTopics("wiki_data")
       .setGroupId("flink-consumer-group")
       .setProperty("receive.message.max.bytes", "200M")
-      .setStartingOffsets(OffsetsInitializer.earliest())
+      .setStartingOffsets(OffsetsInitializer.latest())
       //.setValueOnlyDeserializer(new SimpleStringSchema())
       .setValueOnlyDeserializer(new JsonDeserializer[WikipediaUpdate](classOf[WikipediaUpdate]))
       .build()
@@ -64,24 +69,30 @@ object KafkaReader {
       .withTimestampAssigner( new SerializableTimestampAssigner[WikipediaUpdate] {
         override def extractTimestamp(element: WikipediaUpdate, recordTimestamp: Long): Long = element.timestamp * 1000
       })
-      .withIdleness(java.time.Duration.ofSeconds(1))  // IMPORTANT: Handle idle sources
-      ,
+      .withIdleness(java.time.Duration.ofSeconds(1)), // IMPORTANT: Handle idle sources
       "Kafka source 2"
     )
 
-
+    // Group the updates by wiki and compute some stats
     val updates_by_wiki: DataStream[WindowResult] = lines
       .keyBy(_.wiki)
       .window(TumblingEventTimeWindows.of(Time.seconds(2)))
       .process(new GatherRecords)
-      
-    // Group the updates by wiki and compute some stats
-    updates_by_wiki
+    
+    // Filter FR only
+    val updates_wiki_fr = updates_by_wiki
       .filter(_.wiki == "frwiki")
+
+    // Sink print
+    updates_wiki_fr
       .map(t => s"${t.windowStart} (${t.wiki}) : ${t.totalUpdates} updates by ${t.distinctUsers} distinct users.")
       .print("Wiki updates (grouped)")
       .setParallelism(2)
 
+    // Sink alert "Multiple edits"
+    updates_wiki_fr
+      .filter(rec => rec.totalUpdates > (rec.distinctUsers + 1))
+      .map(t => (new AlerterPushover).alert("Multiple edits",t))
 
     env.execute("Read from Kafka")
   }

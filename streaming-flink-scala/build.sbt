@@ -7,6 +7,8 @@ scalaVersion := "2.12.18" // must match the scala library installed onto the Fli
 val flinkVersion = "1.20.3"
 
 libraryDependencies ++= Seq(
+  "com.lihaoyi" %% "upickle" % "4.1.0",
+  "com.softwaremill.sttp.client4" %% "core" % "4.0.9",
   "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.20.1",
   "org.apache.flink" %% "flink-scala" % flinkVersion % "provided",
   "org.apache.flink" %% "flink-streaming-scala" % flinkVersion % "provided",
