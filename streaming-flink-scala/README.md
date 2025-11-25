@@ -26,3 +26,14 @@ make cluster.submit
 # Show logs of the job in the cluster
 make cluster.logs
 ```
+
+## Stream Wikipedia changes
+
+To ingest Wikipedia changes into the Kafka cluster:
+
+```sh
+# Go to folder streaming-kafka
+cd ../streaming-kafka
+# Start streaming data
+make streaming
+```
