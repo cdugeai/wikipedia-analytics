@@ -78,21 +78,35 @@ object KafkaReader {
       .keyBy(_.wiki)
       .window(TumblingEventTimeWindows.of(Time.seconds(2)))
       .process(new GatherRecords)
+      .name("Compute stats").uid("Compute stats")
     
     // Filter FR only
     val updates_wiki_fr = updates_by_wiki
       .filter(_.wiki == "frwiki")
+      .name("Filter FR wiki").uid("Filter FR wiki")
 
     // Sink print
     updates_wiki_fr
       .map(t => s"${t.windowStart} (${t.wiki}) : ${t.totalUpdates} updates by ${t.distinctUsers} distinct users.")
+      .name("Format stdout msg").uid("Format stdout msg")
+      //.setParallelism(2)
       .print("Wiki updates (grouped)")
-      .setParallelism(2)
 
     // Sink alert "Multiple edits"
     updates_wiki_fr
-      .filter(rec => rec.totalUpdates > (rec.distinctUsers + 1))
+      .filter(rec => rec.totalUpdates > (rec.distinctUsers + 1)) 
+      .name("Filter condition anomaly 1").uid("Filter condition anomaly 1")
+      .disableChaining()
       .map(t => (new AlerterPushover).alert("Multiple edits",t))
+      .name("Pushing alert 1").uid("Pushing alert 1")
+
+    // SAMPLE Sink alert "Multiple edits 2"
+    updates_wiki_fr
+      .filter(rec => rec.totalUpdates > (rec.distinctUsers + 0)) 
+      .name("Filter condition anomaly 2").uid("Filter condition anomaly 2")
+      .disableChaining()
+      .map(t => (new AlerterPushover).alert("Multiple edits 2",t))
+      .name("Pushing alert 2").uid("Pushing alert 2")
 
     env.execute("Read from Kafka")
   }
