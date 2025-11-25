@@ -5,12 +5,13 @@ import com.example.WindowResult
 import sttp.client4.quick._
 
 
-class AlerterPushover {
+class AlerterPushover extends Alerter {
+
   def alertStdout(content: WindowResult) {
     print("Alert: "+ content.windowStart+s"${content.totalUpdates}>${content.distinctUsers}")
   }
 
-  def alert(title: String, content: WindowResult) {
+  override def alert(title: String, content: WindowResult): Unit = {
 
     val msg: String = s"${content.totalUpdates} modifications par ${content.distinctUsers} (${content.windowStart})"
     val pushover_token: Option[String] = sys.env.get("PUSHOVER_TOKEN")
