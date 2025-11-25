@@ -51,7 +51,6 @@ object KafkaReader {
 
     val kafkaSource = KafkaSource
       .builder()
-      .setBootstrapServers("kafka:9093")
       .setBootstrapServers(kafka_addr)
       .setTopics("wiki_data")
       .setGroupId("flink-consumer-group")
