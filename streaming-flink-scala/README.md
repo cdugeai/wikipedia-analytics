@@ -7,6 +7,10 @@ This is code for versions:
 - Flink: 1.20.3
 - Scala: 2.12.18
 
+The lineage of the Flink tasks is:
+
+![](docs/stream_lineage.png)
+
 ## Available commands
 
 Locally:
