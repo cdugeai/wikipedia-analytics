@@ -11,9 +11,8 @@ class AlerterPushover extends Alerter {
     print("Alert: "+ content.windowStart+s"${content.totalUpdates}>${content.distinctUsers}")
   }
 
-  override def alert(title: String, content: WindowResult): Unit = {
+  override def alert(title: String, msg: String): String = {
 
-    val msg: String = s"${content.totalUpdates} modifications par ${content.distinctUsers} (${content.windowStart})"
     val pushover_token: Option[String] = sys.env.get("PUSHOVER_TOKEN")
     val pushover_user: Option[String] = sys.env.get("PUSHOVER_USER")
     
@@ -39,9 +38,11 @@ class AlerterPushover extends Alerter {
         .body(ujson.write(json))
         .send()
 
-    println("ALERT "+title)
+    //println("ALERT "+title)
     //println(response.code)
     //println(response.body)
+
+    return msg;
   }
 
 

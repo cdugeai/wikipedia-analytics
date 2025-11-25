@@ -5,7 +5,14 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import scala.util.Try
 
-case class WikipediaUpdate(wiki: String, timestamp: Long, user: String){
+case class WikipediaUpdateMeta(id: String, uri: String) extends Serializable
+
+case class WikipediaUpdate(
+  wiki: String, 
+  timestamp: Long, 
+  user: String, 
+  meta: WikipediaUpdateMeta // or @JsonProperty("meta.id") metaId: String
+) extends  Serializable{
 
   def sinkOutput: String = s"$wiki, $timestamp, $user"
 
@@ -16,15 +23,16 @@ case class WikipediaUpdate(wiki: String, timestamp: Long, user: String){
 }
 
 object WikipediaUpdate {
-  val error = WikipediaUpdate("error reading", 0L, "no_user")
+  val error = WikipediaUpdate("error reading", 0L, "no_user", WikipediaUpdateMeta("no_id", "no_uri"))
 
   def fromString(string: String): WikipediaUpdate =
     Try {
-      val Array(wiki, timestamp, user) = string.split(',')
+      val Array(wiki, timestamp, user, meta_id, meta_uri) = string.split(',')
       WikipediaUpdate(
         wiki.trim,
         timestamp.trim.toLong,
-        user.trim
+        user.trim,
+        WikipediaUpdateMeta(meta_id, meta_uri)
       )
     }.getOrElse(error)
 }

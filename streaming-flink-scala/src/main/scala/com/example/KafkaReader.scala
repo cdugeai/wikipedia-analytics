@@ -43,7 +43,11 @@ class GatherRecords extends ProcessWindowFunction[WikipediaUpdate, WindowResult,
   }
 }
 
+
+case class PageActivity(url: String, users: Set[String], edits: Int) extends Serializable
+
 object KafkaReader {
+
   def main(args: Array[String]): Unit = {
     val env = StreamExecutionEnvironment.getExecutionEnvironment
     val kafka_addr: String = sys.env.get("KAFKA_ADDR").getOrElse("MISSING KAFKA_ADDR")
@@ -72,10 +76,20 @@ object KafkaReader {
       "Kafka source 2"
     )
 
+
+    val wiki_by_page_5min = lines
+      .filter(t => Set("enwiki", "frwiki").contains(t.wiki))
+      .map(e => PageActivity(e.meta.uri, Set(e.user), 1))
+      .keyBy(_.url)
+      .window(TumblingEventTimeWindows.of(Time.minutes(5)))
+      .reduce((p1, p2) => PageActivity(p1.url, p1.users++p2.users, p1.edits+p2.edits))
+      .name("Pages grouped by 5 min")
+
+
     // Group the updates by wiki and compute some stats
     val updates_by_wiki: DataStream[WindowResult] = lines
       .keyBy(_.wiki)
-      .window(TumblingEventTimeWindows.of(Time.seconds(2)))
+      .window(TumblingEventTimeWindows.of(Time.seconds(20)))
       .process(new GatherRecords)
       .name("Compute stats")
     
@@ -96,16 +110,19 @@ object KafkaReader {
       .filter(rec => rec.totalUpdates > (rec.distinctUsers + 1)) 
       .name("Filter condition anomaly 1")
       .disableChaining()
-      .map(t => (new AlerterPushover).alert("Multiple edits",t))
+      .map(t => (new AlerterPushover).alert("Multiple edits by user: ",s"${t.distinctUsers} utilisateurs ont modifié ${t.totalUpdates} articles."))
       .name("Pushing alert 1")
+      .print("ALERT Multiple edits by user:")
 
-    // SAMPLE Sink alert "Multiple edits 2"
-    updates_wiki_fr
-      .filter(rec => rec.totalUpdates > (rec.distinctUsers + 0)) 
+    // Sink alert "Multiple edits 2"
+    // Page updated by > 5 users
+    wiki_by_page_5min
+      .filter(p => p.users.size>2) 
       .name("Filter condition anomaly 2")
       .disableChaining()
-      .map(t => (new AlerterPushover).alert("Multiple edits 2",t))
+      .map(t => (new AlerterPushover).alert("Multiple edits on page: ",s"Page ${t.url} edited by ${t.users.size} users."))
       .name("Pushing alert 2")
+      .print("ALERT Multiple edits on page:")
 
     env.execute("Read from Kafka")
   }
