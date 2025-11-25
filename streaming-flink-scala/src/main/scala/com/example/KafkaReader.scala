@@ -89,30 +89,30 @@ object KafkaReader {
     // Group the updates by wiki and compute some stats
     val updates_by_wiki: DataStream[WindowResult] = lines
       .keyBy(_.wiki)
-      .window(TumblingEventTimeWindows.of(Time.seconds(20)))
+      .window(TumblingEventTimeWindows.of(Time.seconds(60)))
       .process(new GatherRecords)
       .name("Compute stats")
     
     // Filter FR only
-    val updates_wiki_fr = updates_by_wiki
-      .filter(_.wiki == "frwiki")
+    val updates_wiki_fr_en = updates_by_wiki
+      .filter(t => Set("enwiki", "frwiki").contains(t.wiki))
       .name("Filter FR wiki")
 
     // Sink print
-    updates_wiki_fr
+    updates_wiki_fr_en
       .map(t => s"${t.windowStart} (${t.wiki}) : ${t.totalUpdates} updates by ${t.distinctUsers} distinct users.")
       .name("Format stdout msg")
       //.setParallelism(2)
       .print("Wiki updates (grouped)")
 
     // Sink alert "Multiple edits"
-    updates_wiki_fr
+    updates_wiki_fr_en
       .filter(rec => rec.totalUpdates > (rec.distinctUsers + 1)) 
       .name("Filter condition anomaly 1")
       .disableChaining()
       .map(t => (new AlerterPushover).alert("Multiple edits by user: ",s"${t.distinctUsers} utilisateurs ont modifié ${t.totalUpdates} articles."))
       .name("Pushing alert 1")
-      .print("ALERT Multiple edits by user:")
+      .print("ALERT1 Multiple edits by user:")
 
     // Sink alert "Multiple edits 2"
     // Page updated by > 5 users
@@ -122,7 +122,7 @@ object KafkaReader {
       .disableChaining()
       .map(t => (new AlerterPushover).alert("Multiple edits on page: ",s"Page ${t.url} edited by ${t.users.size} users."))
       .name("Pushing alert 2")
-      .print("ALERT Multiple edits on page:")
+      .print("ALERT2 Multiple edits on page:")
 
     env.execute("Read from Kafka")
   }
