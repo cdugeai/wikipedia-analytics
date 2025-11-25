@@ -7,6 +7,10 @@ This is code for versions:
 - Flink: 1.20.3
 - Scala: 2.12.18
 
+The lineage of the Flink tasks is:
+
+![](docs/stream_lineage.png)
+
 ## Available commands
 
 Locally:
@@ -25,4 +29,15 @@ make cluster.build
 make cluster.submit
 # Show logs of the job in the cluster
 make cluster.logs
+```
+
+## Stream Wikipedia changes
+
+To ingest Wikipedia changes into the Kafka cluster:
+
+```sh
+# Go to folder streaming-kafka
+cd ../streaming-kafka
+# Start streaming data
+make streaming
 ```
