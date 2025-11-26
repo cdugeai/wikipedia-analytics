@@ -87,21 +87,13 @@ object KafkaReader {
       ).name("Skip Category pages")
 
 
-    val updates_by_page_5min = updates_wiki_fr_en
-      .map(e => PageActivity(e.meta.uri, Set(e.user), 1))
-      .keyBy(_.url)
-      .window(TumblingEventTimeWindows.of(Time.minutes(5)))
-      .reduce((p1, p2) => PageActivity(p1.url, p1.users++p2.users, p1.edits+p2.edits))
-      .name("Pages grouped by 5 min")
-
-
+    // [ALERT 1]
     // Group the updates by wiki and compute some stats
     val updates_by_wiki_1min: DataStream[WindowResult] = updates_wiki_fr_en
       .keyBy(_.wiki)
       .window(TumblingEventTimeWindows.of(Time.seconds(60)))
       .process(new GatherRecords)
       .name("Compute stats")
-    
 
     // Sink print
     updates_by_wiki_1min
@@ -119,6 +111,15 @@ object KafkaReader {
       .name("Pushing alert 1")
       .print("ALERT1 Multiple edits by user:")
 
+
+    // [ALERT 2]
+    val updates_by_page_5min = updates_wiki_fr_en
+      .map(e => PageActivity(e.meta.uri, Set(e.user), 1))
+      .keyBy(_.url)
+      .window(TumblingEventTimeWindows.of(Time.minutes(5)))
+      .reduce((p1, p2) => PageActivity(p1.url, p1.users++p2.users, p1.edits+p2.edits))
+      .name("Pages grouped by 5 min")
+    
     // Sink alert "Multiple edits 2"
     // Page updated by > 5 users
     updates_by_page_5min
@@ -130,6 +131,8 @@ object KafkaReader {
       .print("ALERT2 Multiple edits on page:")
 
     
+    // [ALERT 3]
+
     // Sink alert "Edit war"
     // 2+ users edit 3+ times each a single page in 15 minutes
     updates_wiki_fr_en
