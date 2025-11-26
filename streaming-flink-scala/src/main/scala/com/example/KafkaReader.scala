@@ -75,16 +75,19 @@ object KafkaReader {
       })
       .withIdleness(java.time.Duration.ofSeconds(1)), // IMPORTANT: Handle idle sources
       "Kafka source 2"
-    )   // Ignore Category pages
+    )   
+
+    // Filter FR-EN only + skip Category
+    val updates_wiki_fr_en = lines
+      .filter(t => Set("enwiki", "frwiki").contains(t.wiki))
+      .name("Filter FR wiki")
       .filter(page =>
         !page.meta.uri.contains("Category:") && 
         !page.meta.uri.contains("Cat%C3%A9gorie:")
-      )
+      ).name("Skip Category pages")
 
 
-
-    val wiki_by_page_5min = lines
-      .filter(t => Set("enwiki", "frwiki").contains(t.wiki))
+    val updates_by_page_5min = updates_wiki_fr_en
       .map(e => PageActivity(e.meta.uri, Set(e.user), 1))
       .keyBy(_.url)
       .window(TumblingEventTimeWindows.of(Time.minutes(5)))
@@ -93,26 +96,22 @@ object KafkaReader {
 
 
     // Group the updates by wiki and compute some stats
-    val updates_by_wiki: DataStream[WindowResult] = lines
+    val updates_by_wiki_1min: DataStream[WindowResult] = updates_wiki_fr_en
       .keyBy(_.wiki)
       .window(TumblingEventTimeWindows.of(Time.seconds(60)))
       .process(new GatherRecords)
       .name("Compute stats")
     
-    // Filter FR-EN only
-    val updates_wiki_fr_en = updates_by_wiki
-      .filter(t => Set("enwiki", "frwiki").contains(t.wiki))
-      .name("Filter FR wiki")
 
     // Sink print
-    updates_wiki_fr_en
+    updates_by_wiki_1min
       .map(t => s"${t.windowStart} (${t.wiki}) : ${t.totalUpdates} updates by ${t.distinctUsers} distinct users.")
       .name("Format stdout msg")
       //.setParallelism(2)
       .print("Wiki updates (grouped)")
 
     // Sink alert "Multiple edits"
-    updates_wiki_fr_en
+    updates_by_wiki_1min
       .filter(rec => rec.totalUpdates > (rec.distinctUsers + 1)) 
       .name("Filter condition anomaly 1")
       .disableChaining()
@@ -122,7 +121,7 @@ object KafkaReader {
 
     // Sink alert "Multiple edits 2"
     // Page updated by > 5 users
-    wiki_by_page_5min
+    updates_by_page_5min
       .filter(p => p.users.size>2) 
       .name("Filter condition anomaly 2")
       .disableChaining()
@@ -133,12 +132,11 @@ object KafkaReader {
     
     // Sink alert "Edit war"
     // 2+ users edit 3+ times each a single page in 15 minutes
-    lines
-      .filter(t => Set("enwiki", "frwiki").contains(t.wiki))
+    updates_wiki_fr_en
       .keyBy(_.meta.uri)
       .window(TumblingEventTimeWindows.of(Time.minutes(15)))
       .aggregate(DetectEditWar.aggregate, DetectEditWar.process)
-      .name("Pages with 2+ users, 5+ edits each")
+      .name("Edit War detection")
       .disableChaining()
       .map(t => (new AlerterPushover).alert("Edit war on page: ",s"Page ${t.url} edited by ${t.qualified_users.size} users: ${t.qualified_users}"))
       .name("Pushing alert 3")
