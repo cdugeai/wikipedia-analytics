@@ -75,7 +75,12 @@ object KafkaReader {
       })
       .withIdleness(java.time.Duration.ofSeconds(1)), // IMPORTANT: Handle idle sources
       "Kafka source 2"
-    )
+    )   // Ignore Category pages
+      .filter(page =>
+        !page.meta.uri.contains("Category:") && 
+        !page.meta.uri.contains("Cat%C3%A9gorie:")
+      )
+
 
 
     val wiki_by_page_5min = lines
@@ -94,7 +99,7 @@ object KafkaReader {
       .process(new GatherRecords)
       .name("Compute stats")
     
-    // Filter FR only
+    // Filter FR-EN only
     val updates_wiki_fr_en = updates_by_wiki
       .filter(t => Set("enwiki", "frwiki").contains(t.wiki))
       .name("Filter FR wiki")
@@ -135,7 +140,7 @@ object KafkaReader {
       .aggregate(DetectEditWar.aggregate, DetectEditWar.process)
       .name("Pages with 2+ users, 5+ edits each")
       .disableChaining()
-      .map(t => (new AlerterPushover).alert("Edit war on page: ",s"Page ${t.url} edited by ${t.qualified_users.size} users."))
+      .map(t => (new AlerterPushover).alert("Edit war on page: ",s"Page ${t.url} edited by ${t.qualified_users.size} users: ${t.qualified_users}"))
       .name("Pushing alert 3")
       .print("ALERT3 Edit war:")
 
