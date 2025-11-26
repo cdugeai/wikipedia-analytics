@@ -7,7 +7,7 @@ def format_change(change_str: str) -> object:
     change = json.loads(change_str)
     return {
         "meta": {
-            "uri": change["meta"]["uri"],
+            "uri": change["meta"].get("uri", "no_uri"),
             "id": change["meta"]["id"],
             "domain": change["meta"]["domain"],
             "dt": change["meta"]["dt"],

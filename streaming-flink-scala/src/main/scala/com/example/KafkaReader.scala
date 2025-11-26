@@ -17,6 +17,7 @@ import org.apache.flink.api.common.eventtime.SerializableTimestampAssigner
 import com.fasterxml.jackson.module.scala.deser.overrides
 
 import com.example.alert.AlerterPushover
+import com.example.detect.DetectEditWar
 
 // Type for the gathered results
 case class WindowResult(windowStart: Long, windowEnd: Long, wiki: String, totalUpdates: Int, distinctUsers: Int)
@@ -123,6 +124,21 @@ object KafkaReader {
       .map(t => (new AlerterPushover).alert("Multiple edits on page: ",s"Page ${t.url} edited by ${t.users.size} users."))
       .name("Pushing alert 2")
       .print("ALERT2 Multiple edits on page:")
+
+    
+    // Sink alert "Edit war"
+    // 2+ users edit 3+ times each a single page in 15 minutes
+    lines
+      .filter(t => Set("enwiki", "frwiki").contains(t.wiki))
+      .keyBy(_.meta.uri)
+      .window(TumblingEventTimeWindows.of(Time.minutes(15)))
+      .aggregate(DetectEditWar.aggregate, DetectEditWar.process)
+      .name("Pages with 2+ users, 5+ edits each")
+      .disableChaining()
+      .map(t => (new AlerterPushover).alert("Edit war on page: ",s"Page ${t.url} edited by ${t.qualified_users.size} users."))
+      .name("Pushing alert 3")
+      .print("ALERT3 Edit war:")
+
 
     env.execute("Read from Kafka")
   }
