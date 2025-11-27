@@ -7,9 +7,9 @@ This is code for versions:
 - Flink: 1.20.3
 - Scala: 2.12.18
 
-The lineage of the Flink tasks is:
-
-![](docs/stream_lineage.png)
+|    Lineage of Flink tasks    |          N of messages sent           |
+| :--------------------------: | :-----------------------------------: |
+| ![](docs/stream_lineage.png) | ![](docs/stream_lineage_msg_sent.png) |
 
 ## Available commands
 
