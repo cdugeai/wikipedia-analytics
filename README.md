@@ -16,9 +16,9 @@ _Stack: Pyspark, Polars, SQL, Python_
 
 One part of the project is about detecting anomalies in Wikipedia updates **in real-time**. Here is the overview of the project.
 
-|        Project overview        |
-| :----------------------------: |
-| ![](docs/overview_project.png) |
+|                   Project overview                   |
+| :--------------------------------------------------: |
+| ![](streaming-flink-scala/docs/overview_project.png) |
 
 The alerts are sent directly to a phone in real-time when an anomaly is detected:
 
