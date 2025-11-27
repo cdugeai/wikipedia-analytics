@@ -19,32 +19,6 @@ import com.fasterxml.jackson.module.scala.deser.overrides
 import com.example.alert.AlerterPushover
 import com.example.detect.DetectEditWar
 
-// Type for the gathered results
-case class WindowResult(windowStart: Long, windowEnd: Long, wiki: String, totalUpdates: Int, distinctUsers: Int)
-
-// Method to gather results by wiki
-class GatherRecords extends ProcessWindowFunction[WikipediaUpdate, WindowResult, String, TimeWindow] {
-  override def process(
-    key: String,
-    context: Context,
-    elements: Iterable[WikipediaUpdate],
-    out: Collector[WindowResult]
-  ): Unit = {
-    val totalUpdates = elements.map(_ => 1).sum
-    // val users = elements.map(_.user).mkString(", ") // Concat user names
-    val distinctUsers = elements.toStream.distinct.length
-
-    out.collect(WindowResult(
-      context.window.getStart,
-      context.window.getEnd,
-      key,
-      totalUpdates,
-      distinctUsers
-    ))
-  }
-}
-
-
 case class PageActivity(url: String, users: Set[String], edits: Int) extends Serializable
 
 object KafkaReader {
@@ -89,28 +63,26 @@ object KafkaReader {
 
     // [ALERT 1]
     // Group the updates by wiki and compute some stats
-    val updates_by_wiki_1min: DataStream[WindowResult] = updates_wiki_fr_en
-      .keyBy(_.wiki)
-      .window(TumblingEventTimeWindows.of(Time.seconds(60)))
-      .process(new GatherRecords)
-      .name("Compute stats")
+    val windows_s_edits_by_user = 10; // Window in s
+    val threshold_edits_by_user = 5; // Max edits by user
 
-    // Sink print
-    updates_by_wiki_1min
-      .map(t => s"${t.windowStart} (${t.wiki}) : ${t.totalUpdates} updates by ${t.distinctUsers} distinct users.")
-      .name("Format stdout msg")
-      //.setParallelism(2)
-      .print("Wiki updates (grouped)")
-
-    // Sink alert "Multiple edits"
-    updates_by_wiki_1min
-      .filter(rec => rec.totalUpdates > (rec.distinctUsers + 1)) 
+    val alert1_multiple_edits_user: DataStream[(String, Int)] = 
+      updates_wiki_fr_en
+      .map(u => (u.user, 1)) // (user, n_edits)
+      .keyBy(_._1) // Keyed by user
+      .window(TumblingEventTimeWindows.of(Time.seconds(windows_s_edits_by_user)))
+      .reduce((a, b) => (a._1, a._2 + b._2)) // Sum edits for user
+      .name("Edits grouped by user")
+      
+    
+    // Send alert
+    alert1_multiple_edits_user
+      .filter(_._2 > threshold_edits_by_user)
       .name("Filter condition anomaly 1")
       .disableChaining()
-      .map(t => (new AlerterPushover).alert("Multiple edits by user: ",s"${t.distinctUsers} utilisateurs ont modifié ${t.totalUpdates} articles."))
+      .map(t => (new AlerterPushover).alert("Multiple edits by user: ",s"User ${t._1} edited ${t._2} pages."))
       .name("Pushing alert 1")
       .print("ALERT1 Multiple edits by user:")
-
 
     // [ALERT 2]
     val updates_by_page_5min = updates_wiki_fr_en
@@ -141,7 +113,7 @@ object KafkaReader {
       .aggregate(DetectEditWar.aggregate, DetectEditWar.process)
       .name("Edit War detection")
       .disableChaining()
-      .map(t => (new AlerterPushover).alert("Edit war on page: ",s"Page ${t.url} edited by ${t.qualified_users.size} users: ${t.qualified_users}"))
+      .map(t => (new AlerterPushover).alert("Edit war on page: ",s"Page ${t.url} edited by ${t.qualified_users.size} users multiple times: ${t.qualified_users}"))
       .name("Pushing alert 3")
       .print("ALERT3 Edit war:")
 

@@ -56,15 +56,12 @@ object DetectEditWar {
             val userCounts = elements.head
 
             // DEBUG
-            if (userCounts.size>1) {
-                println("usercounts:"+userCounts)
-            }
+            // if (userCounts.size>2) println("usercounts:"+userCounts)
 
             // Users with >= 5 edits
             val qualifyingUsers = userCounts.filter(_._2 >= threshold_edits)
             // N users matching edits criterion
             if (qualifyingUsers.size >= threshold_users) {
-                println("usercounts ALERT:"+userCounts)
                 out.collect(SuspectPageAlert(pageId, qualifyingUsers))
             }
         }

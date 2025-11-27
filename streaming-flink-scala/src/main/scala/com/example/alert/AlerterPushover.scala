@@ -1,14 +1,11 @@
 package com.example.alert
 
-import com.example.WindowResult
-
 import sttp.client4.quick._
-
 
 class AlerterPushover extends Alerter {
 
-  def alertStdout(content: WindowResult) {
-    print("Alert: "+ content.windowStart+s"${content.totalUpdates}>${content.distinctUsers}")
+  def alertStdout(content: String) {
+    print("Alert: "+ content)
   }
 
   override def alert(title: String, msg: String): String = {
