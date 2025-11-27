@@ -1,5 +1,11 @@
 # Scala - Flink
 
+Here is the overview of the project. You can see the different blocks interacting in order to detect updates anomaly on Wikipedia in real-time.
+
+|        Project overview        |
+| :----------------------------: |
+| ![](docs/overview_project.png) |
+
 Start a Flink cluster and execute Scala code in it.
 
 This is code for versions:
@@ -7,7 +13,7 @@ This is code for versions:
 - Flink: 1.20.3
 - Scala: 2.12.18
 
-|    Lineage of Flink tasks    |          N of messages sent           |
+|    Lineage of Flink tasks    |       N of messages sent (29k+)       |
 | :--------------------------: | :-----------------------------------: |
 | ![](docs/stream_lineage.png) | ![](docs/stream_lineage_msg_sent.png) |
 
